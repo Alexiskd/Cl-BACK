@@ -5,7 +5,9 @@
     "assets": [
       {
         "include": "templates/**/*",
-        "outDir": "templates",
+        "outDir": "templates"
+      },
+      {
         "include": "../assets/**/*",
         "outDir": "./assets"
       }
