@@ -1,33 +1,50 @@
-// main.ts
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { ValidationPipe, Logger } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
-import { LoggingInterceptor } from './logging.interceptor'; // Import de l'intercepteur
-import { json, urlencoded } from 'express'; // Utilisation des middlewares Express
+import { LoggingInterceptor } from './logging.interceptor';
+import { json, urlencoded } from 'express';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   const logger = new Logger('Bootstrap');
 
-  // Augmentation de la limite de taille pour les requêtes JSON et urlencoded
+  // Augmenter la limite de taille pour les requêtes JSON et urlencoded
   app.use(json({ limit: '10mb' }));
   app.use(urlencoded({ limit: '10mb', extended: true }));
 
-  // Activer CORS en autorisant les méthodes nécessaires, y compris PATCH et OPTIONS
+  // Activer CORS en autorisant plusieurs origines (par exemple, pour le développement)
+  const allowedOrigins = [
+    process.env.CORS_ORIGIN || 'http://localhost:5173',
+    'https://2f24-90-90-24-19.ngrok-free.app',
+    'http://localhost:5174',
+    'http://localhost:5175',
+  ];
+
   app.enableCors({
-    origin: process.env.CORS_ORIGIN || 'http://localhost:5173',
+    origin: (origin, callback) => {
+      // Autoriser les requêtes sans origine (ex : Postman ou scripts internes)
+      if (!origin) {
+        return callback(null, true);
+      }
+      if (allowedOrigins.indexOf(origin) !== -1) {
+        // Retourne l'origine réelle afin que l'en-tête Access-Control-Allow-Origin soit correct
+        return callback(null, origin);
+      } else {
+        return callback(new Error(`Origin ${origin} non autorisée par CORS`));
+      }
+    },
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-    allowedHeaders: 'Content-Type, Authorization',
+    allowedHeaders: ['Content-Type', 'Authorization'],
     credentials: true,
   });
 
   // Utilisation d'un ValidationPipe global
   app.useGlobalPipes(
     new ValidationPipe({
-      whitelist: true,               // Supprime automatiquement les propriétés non déclarées dans le DTO
-      forbidNonWhitelisted: true,    // Lève une erreur si une propriété non déclarée est présente
-      transform: true,               // Transforme automatiquement le payload en instance du DTO
+      whitelist: true,
+      forbidNonWhitelisted: true,
+      transform: true,
     }),
   );
 
@@ -43,9 +60,10 @@ async function bootstrap() {
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('api', app, document);
 
-  const port = process.env.PORT || 3000;
-  await app.listen(port);
-  logger.log(`Application running on http://localhost:${port}`);
+  // Utilisation du port 3000
+  const port = 3000;
+  await app.listen(port, '0.0.0.0');
+  logger.log(`Application running on port ${port}`);
 }
 
 bootstrap();

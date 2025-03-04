@@ -4,7 +4,6 @@ import * as PDFDocument from 'pdfkit';
 import { MailDto } from './mail.dto';
 import { CancelMailDto } from './cancel-mail.dto';
 import mailConfig from './mail.config';
-import { join } from 'path';
 
 @Injectable()
 export class MailService {
@@ -27,15 +26,13 @@ export class MailService {
   }
 
   /**
-   * Génère le PDF de la facture avec un style inspiré de la template Pug donnée,
-   * en adaptant dynamiquement les informations du client et du produit.
-   * Utilise la couleur #2E7D32 pour les éléments graphiques et intègre le logo.
-   * Ici, les positions verticales (Y) ont été décalées pour que le texte soit affiché plus bas.
+   * Génère le PDF de la facture en s'inspirant de la template Pug,
+   * avec les informations dynamiques du client et du produit.
+   * La génération du PDF ne comprend plus l'importation du logo.
    */
   private generateInvoicePdf(mailDto: MailDto): Promise<Buffer> {
     return new Promise((resolve, reject) => {
       try {
-        // Création du document PDF (A4, marge 50)
         const doc = new PDFDocument({ size: 'A4', margin: 50 });
         const buffers: Buffer[] = [];
         doc.on('data', buffers.push.bind(buffers));
@@ -44,15 +41,12 @@ export class MailService {
           resolve(pdfData);
         });
 
-        doc.rect(50, 50, doc.page.width - 100,80 ).fill('#2E7D32');
+        // Barre de couleur en haut du document
+        doc.rect(50, 50, doc.page.width - 100, 80).fill('#2E7D32');
 
-        // Insertion du logo
-        const logoPath = join(__dirname, '..', 'assets', 'logo.png');
-        const logoWidth = 50;
-        const logoHeight = 50;
-        doc.image(logoPath, 60, 65, { width: logoWidth, height: logoHeight });
-        
-        // Titre de la facture et sous-titre (déplacés plus bas)
+        // Suppression de l'importation et de l'affichage du logo
+
+        // Titre de la facture et sous-titre
         doc
           .fillColor('white')
           .font('Helvetica-Bold')
@@ -63,11 +57,9 @@ export class MailService {
           .fontSize(16)
           .text(`Cléservice.com`, 0, 105, { align: 'center' });
 
-        // --- Infos de facturation ---
-        // Génération d'un numéro de facture (par exemple "INV-<timestamp>")
+        // Informations de facturation
         const invoiceNumber = `INV-${Date.now()}`;
         const invoiceDate = new Date().toLocaleDateString('fr-FR');
-        // Décalage des infos de facturation (commencent à Y=140)
         doc
           .fillColor('black')
           .font('Helvetica')
@@ -75,8 +67,7 @@ export class MailService {
           .text(`Facture : ${invoiceNumber}`, 50, 140)
           .text(`Date de facturation: ${invoiceDate}`, 50, 160);
 
-        // --- Deux colonnes : "Facturé à" et "Description de service" ---
-        // On décale également ces colonnes pour les placer plus bas
+        // Deux colonnes : "Facturé à" et "Description de service"
         const startY = 180;
         const colWidth = (doc.page.width - 100) / 2;
         const gap = 20;
@@ -99,20 +90,17 @@ export class MailService {
           .font('Helvetica-Bold')
           .fontSize(12)
           .text('Description de service:', rightColX, startY, { width: colWidth });
-        // Par exemple, on indique "Commande de clé(s)" puis la période (adaptable)
         doc
           .font('Helvetica')
           .fontSize(12)
           .text('Commande de clé(s)', rightColX, startY + 18, { width: colWidth })
           .text('Période: Aujourd\'hui', rightColX, startY + 34, { width: colWidth });
 
-        // --- Tableau récapitulatif ---
-        // Colonnes : Période, Description, Heures, Taux, Montant
+        // Tableau récapitulatif
         const tableTop = startY + 90;
         const tableLeft = 50;
         const tableWidth = doc.page.width - 100;
         const rowHeight = 25;
-        // Répartition des colonnes (en pourcentage)
         const colWidths = [
           tableWidth * 0.2,  // Période
           tableWidth * 0.4,  // Description
@@ -136,16 +124,10 @@ export class MailService {
         doc.lineWidth(0.5);
         doc.rect(tableLeft, tableTop, tableWidth, rowHeight).stroke();
 
-        // Ligne de données (un seul produit par exemple)
+        // Ligne de données
         const rowTop = tableTop + rowHeight;
         doc.font('Helvetica').fontSize(10).fillColor('black');
         x = tableLeft;
-        // Valeurs dynamiques : dans cet exemple,
-        // Période : "Aujourd'hui"
-        // Description : produit(s) commandé(s) (en joignant le tableau mailDto.cle)
-        // Heures : "1" (ou une autre valeur si applicable)
-        // Taux : "—" (non applicable ici, sinon renseigner le taux horaire)
-        // Montant : prix total
         const period = 'Aujourd\'hui';
         const description = Array.isArray(mailDto.cle) ? mailDto.cle.join(', ') : mailDto.cle;
         const heures = '1';
@@ -174,13 +156,7 @@ export class MailService {
         });
         doc.rect(tableLeft, footerTop, tableWidth, rowHeight).stroke();
 
-        // On peut également ajouter des conditions générales sous le tableau, si nécessaire
-        doc.text('', tableLeft + 5, footerTop + 7, {
-          width: colWidths[0] + colWidths[1] + colWidths[2] - 10,
-          align: 'center'
-        });
-
-        // --- Footer (Informations de contact) ---
+        // Pied de page avec les informations de contact
         doc.moveDown(3);
         doc.font('Helvetica')
           .fontSize(9)
@@ -268,7 +244,6 @@ export class MailService {
       </html>
       `;
 
-      // Génération du PDF facture
       const pdfBuffer = await this.generateInvoicePdf(mailDto);
 
       const mailOptions = {
@@ -292,7 +267,6 @@ export class MailService {
     }
   }
 
-  // Méthode d'envoi de l'email d'annulation (inchangée)
   async sendOrderCancellationMail(cancelDto: CancelMailDto) {
     try {
       const { nom, adresseMail, produitsAnnules, prix, reason } = cancelDto;

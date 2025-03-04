@@ -38,6 +38,7 @@ describe('AuthController', () => {
         password: 'password123',
         firstName: 'Test',
         lastName: 'User',
+        newsletter: false
       };
 
       await controller.register(createUserDto);

@@ -1,4 +1,4 @@
-import { Entity, Column, PrimaryGeneratedColumn } from 'typeorm';
+import { Entity, Column, PrimaryGeneratedColumn, CreateDateColumn } from 'typeorm';
 
 @Entity()
 export class Commande {
@@ -67,4 +67,10 @@ export class Commande {
 
   @Column({ nullable: true, default: null })
   attestationPropriete: boolean;
+
+  @Column({ nullable: true, default: '' })
+  ville: string;
+
+  @Column({ nullable: true, default: 1 })
+  quantity: number;
 }
