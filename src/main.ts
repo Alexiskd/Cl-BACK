@@ -16,6 +16,7 @@ async function bootstrap() {
   // Activer CORS en autorisant plusieurs origines (par exemple, pour le développement)
   const allowedOrigins = [
     process.env.CORS_ORIGIN || 'http://localhost:5173',
+    'https://cleservice.com/',
     'https://2f24-90-90-24-19.ngrok-free.app',
     'http://localhost:5174',
     'http://localhost:5175',
