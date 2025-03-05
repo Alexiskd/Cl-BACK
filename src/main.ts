@@ -18,6 +18,7 @@ async function bootstrap() {
     process.env.CORS_ORIGIN || 'http://localhost:5173',
     'https://cleservice.com/',
     'https://cl-front.onrender.com/',
+    'https://cl-front.onrender.com/',
     'https://www.cleservice.com',
     'https://2f24-90-90-24-19.ngrok-free.app',
     'http://localhost:5174',
