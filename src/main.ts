@@ -17,6 +17,7 @@ async function bootstrap() {
   const allowedOrigins = [
     process.env.CORS_ORIGIN || 'http://localhost:5173',
     'https://cleservice.com/',
+    'https://cl-front.onrender.com',
     'https://cl-front.onrender.com/',
     'https://cl-front.onrender.com/',
     'https://www.cleservice.com',
