@@ -16,6 +16,7 @@ async function bootstrap() {
   // Activer CORS en autorisant plusieurs origines (par exemple, pour le développement)
   const allowedOrigins = [
     process.env.CORS_ORIGIN || 'http://localhost:5173',
+    'https://frontend-f4rf.onrender.com',
     'https://frontend-f4rf.onrender.com/',
     'https://cleservice.com/',
     'https://cl-front.onrender.com',
