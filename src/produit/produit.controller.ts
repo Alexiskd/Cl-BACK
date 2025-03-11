@@ -36,11 +36,11 @@ export class ProduitController {
     return this.produitService.getKeyByName(nom);
   }
 
-  // Recherche et retourne les 2 meilleures correspondances selon le nom (distance de Levenshtein)
+  // Recherche et retourne la meilleure correspondance selon le nom (distance de Levenshtein)
   @Get('cles/best-by-name')
-  async bestKeyByName(@Query('nom') nom: string): Promise<CatalogueCle[]> {
-    this.logger.log(`Requête pour les meilleures correspondances par nom: ${nom}`);
-    return this.produitService.findTop2KeysByName(nom);
+  async bestKeyByName(@Query('nom') nom: string): Promise<CatalogueCle> {
+    this.logger.log(`Requête pour la meilleure correspondance par nom: ${nom}`);
+    return this.produitService.findBestKeyByName(nom);
   }
 
   // Mise à jour d'une clé identifiée par son nom
@@ -62,13 +62,11 @@ export class ProduitController {
       imageUrl: newKey.imageUrl ?? '',
       prixSansCartePropriete: newKey.prixSansCartePropriete ?? 0,
       referenceEbauche: newKey.referenceEbauche?.trim() || null,
-      // Nouveaux champs existants
       typeReproduction: newKey.typeReproduction,
       descriptionNumero: newKey.descriptionNumero ?? '',
       descriptionProduit: newKey.descriptionProduit ?? '',
       estCleAPasse: newKey.estCleAPasse ?? false,
       prixCleAPasse: newKey.prixCleAPasse ?? null,
-      // ===================== Nouveaux champs =====================
       besoinPhoto: newKey.besoinPhoto ?? false,
       besoinNumeroCle: newKey.besoinNumeroCle ?? false,
       besoinNumeroCarte: newKey.besoinNumeroCarte ?? false,
@@ -89,13 +87,11 @@ export class ProduitController {
       imageUrl: newKey.imageUrl ?? '',
       prixSansCartePropriete: newKey.prixSansCartePropriete ?? 0,
       referenceEbauche: newKey.referenceEbauche?.trim() || null,
-      // Nouveaux champs existants
       typeReproduction: newKey.typeReproduction,
       descriptionNumero: newKey.descriptionNumero ?? '',
       descriptionProduit: newKey.descriptionProduit ?? '',
       estCleAPasse: newKey.estCleAPasse ?? false,
       prixCleAPasse: newKey.prixCleAPasse ?? null,
-      // ===================== Nouveaux champs =====================
       besoinPhoto: newKey.besoinPhoto ?? false,
       besoinNumeroCle: newKey.besoinNumeroCle ?? false,
       besoinNumeroCarte: newKey.besoinNumeroCarte ?? false,
