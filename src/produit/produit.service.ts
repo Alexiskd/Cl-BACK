@@ -55,12 +55,20 @@ export class ProduitService {
 
   async findBestKeyByName(nom: string): Promise<CatalogueCle> {
     this.logger.log(`Service: Recherche de la meilleure correspondance pour le nom "${nom}"`);
-    const candidates = await this.catalogueCleRepository
+    
+    // Première recherche avec ILIKE sur le nom
+    let candidates = await this.catalogueCleRepository
       .createQueryBuilder('cle')
       .where('cle.nom ILIKE :nom', { nom: `%${nom.trim()}%` })
       .getMany();
+
+    // Si aucun candidat trouvé, on effectue un fallback sur toutes les clés
     if (candidates.length === 0) {
-      throw new NotFoundException(`Aucune clé trouvée pour le nom "${nom}"`);
+      this.logger.log(`Service: Aucun candidat trouvé pour "${nom}" avec ILIKE, utilisation du fallback sur toutes les clés.`);
+      candidates = await this.catalogueCleRepository.find();
+      if (candidates.length === 0) {
+        throw new NotFoundException(`Aucune clé disponible dans la base de données`);
+      }
     }
 
     const levenshteinDistance = (a: string, b: string): number => {
@@ -81,11 +89,13 @@ export class ProduitService {
       return dp[m][n];
     };
 
+    // Trie des candidats par distance croissante par rapport au nom recherché
     candidates.sort((a, b) =>
       levenshteinDistance(nom.trim().toLowerCase(), a.nom.trim().toLowerCase()) -
       levenshteinDistance(nom.trim().toLowerCase(), b.nom.trim().toLowerCase())
     );
 
+    // Retourne le candidat le plus proche
     return candidates[0];
   }
 
