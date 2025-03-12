@@ -48,13 +48,19 @@ export class ProduitService {
     return keys;
   }
 
-  async getKeyByName(nom: string): Promise<CatalogueCle | undefined> {
+  async getKeyByName(nom: string): Promise<CatalogueCle> {
     // Nettoyer le nom s'il contient "-reproduction-cle.html"
     if (nom.endsWith('-reproduction-cle.html')) {
       nom = nom.replace(/-reproduction-cle\.html$/, '');
     }
     this.logger.log(`Service: Recherche de la clé avec le nom: ${nom}`);
-    return this.catalogueCleRepository.findOne({ where: { nom } });
+    const key = await this.catalogueCleRepository.findOne({ where: { nom } });
+    // Si aucune clé exacte n'est trouvée, on renvoie la meilleure correspondance
+    if (!key) {
+      this.logger.log(`Aucune correspondance exacte trouvée pour "${nom}", utilisation de la meilleure correspondance.`);
+      return this.findBestKeyByName(nom);
+    }
+    return key;
   }
 
   async findBestKeyByName(nom: string): Promise<CatalogueCle> {
