@@ -22,6 +22,7 @@ async function bootstrap() {
     'https://2f24-90-90-24-19.ngrok-free.app',
     'http://localhost:5174',
     'http://localhost:5175',
+    'http://localhost:4173/',
   ];
 
   app.enableCors({
