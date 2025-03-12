@@ -15,15 +15,17 @@ async function bootstrap() {
 
   // Activer CORS en autorisant plusieurs origines (par exemple, pour le développement)
   const allowedOrigins = [
-    process.env.CORS_ORIGIN || 'http://localhost:5173',
-    'https://frontend-fkzn.onrender.com/',
-    'https://cleservice.com/',
-    'https://www.cleservice.com',
-    'https://2f24-90-90-24-19.ngrok-free.app',
-    'http://localhost:5174',
-    'http://localhost:5175',
-    'http://localhost:4173/',
-  ];
+  process.env.CORS_ORIGIN || 'http://localhost:5173',
+  'https://frontend-fkzn.onrender.com/',
+  'https://cleservice.com/',
+  'https://www.cleservice.com',
+  'https://2f24-90-90-24-19.ngrok-free.app',
+  'http://localhost:5174',
+  'http://localhost:5175',
+  'http://localhost:4173', // Removed trailing slash here
+];
+
+  
 
   app.enableCors({
     origin: (origin, callback) => {
