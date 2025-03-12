@@ -56,21 +56,22 @@ export class ProduitService {
   async findBestKeyByName(nom: string): Promise<CatalogueCle> {
     this.logger.log(`Service: Recherche de la meilleure correspondance pour le nom "${nom}"`);
     
-    // Première recherche avec ILIKE sur le nom
+    // Recherche initiale avec ILIKE sur le nom (insensible à la casse)
     let candidates = await this.catalogueCleRepository
       .createQueryBuilder('cle')
       .where('cle.nom ILIKE :nom', { nom: `%${nom.trim()}%` })
       .getMany();
 
-    // Si aucun candidat trouvé, on effectue un fallback sur toutes les clés
+    // Si aucun candidat n'est trouvé, fallback sur l'ensemble des clés
     if (candidates.length === 0) {
       this.logger.log(`Service: Aucun candidat trouvé pour "${nom}" avec ILIKE, utilisation du fallback sur toutes les clés.`);
       candidates = await this.catalogueCleRepository.find();
       if (candidates.length === 0) {
-        throw new NotFoundException(`Aucune clé disponible dans la base de données`);
+        throw new NotFoundException(`Aucune clé disponible dans la base de données.`);
       }
     }
 
+    // Fonction pour calculer la distance de Levenshtein entre deux chaînes
     const levenshteinDistance = (a: string, b: string): number => {
       const m = a.length, n = b.length;
       const dp: number[][] = Array.from({ length: m + 1 }, () => new Array(n + 1).fill(0));
@@ -89,13 +90,16 @@ export class ProduitService {
       return dp[m][n];
     };
 
-    // Trie des candidats par distance croissante par rapport au nom recherché
-    candidates.sort((a, b) =>
-      levenshteinDistance(nom.trim().toLowerCase(), a.nom.trim().toLowerCase()) -
-      levenshteinDistance(nom.trim().toLowerCase(), b.nom.trim().toLowerCase())
-    );
+    const normalizedNom = nom.trim().toLowerCase();
 
-    // Retourne le candidat le plus proche
+    // Trie des candidats par distance de Levenshtein
+    candidates.sort((a, b) => {
+      const distA = levenshteinDistance(normalizedNom, a.nom.trim().toLowerCase());
+      const distB = levenshteinDistance(normalizedNom, b.nom.trim().toLowerCase());
+      return distA - distB;
+    });
+
+    // Retourne la meilleure correspondance
     return candidates[0];
   }
 
@@ -142,56 +146,4 @@ export class ProduitService {
         'imageUrl',
         'referenceEbauche',
         'typeReproduction',
-        'descriptionNumero',
-        'estCleAPasse',
-        'prixCleAPasse',
-        'besoinPhoto',
-        'besoinNumeroCle',
-        'besoinNumeroCarte',
-      ],
-      take: limit,
-      skip: skip,
-      order: { id: 'DESC' },
-    });
-    await this.cacheManager.set(cacheKey, keys, 10);
-    return keys;
-  }
-
-  async countKeys(): Promise<number> {
-    return this.catalogueCleRepository.count();
-  }
-
-  async getKeyByIndex(index: number): Promise<CatalogueCle> {
-    const keys = await this.catalogueCleRepository.find({
-      order: { id: 'DESC' },
-      skip: index,
-      take: 1,
-    });
-    if (keys.length === 0) throw new NotFoundException(`Aucune clé trouvée à l'index ${index}`);
-    return keys[0];
-  }
-
-  async deleteKeyByName(nom: string): Promise<void> {
-    this.logger.log(`Service: Suppression de la clé avec le nom: ${nom}`);
-    const result = await this.catalogueCleRepository.delete({ nom });
-    if (result.affected === 0) throw new NotFoundException(`Clé avec le nom "${nom}" introuvable`);
-    this.logger.log(`Service: Clé avec le nom "${nom}" supprimée avec succès`);
-  }
-
-  async countKeysByBrand(brand: string): Promise<number> {
-    this.logger.log(`Service: Compte des clés pour la marque: ${brand}`);
-    return this.catalogueCleRepository.count({ where: { marque: brand } });
-  }
-
-  async getKeyByBrandAndIndex(brand: string, index: number): Promise<CatalogueCle> {
-    this.logger.log(`Service: Récupération de la clé pour la marque: ${brand} à l'index: ${index}`);
-    const keys = await this.catalogueCleRepository.find({
-      where: { marque: brand },
-      order: { id: 'DESC' },
-      skip: index,
-      take: 1,
-    });
-    if (keys.length === 0) throw new NotFoundException(`Aucune clé trouvée pour la marque "${brand}" à l'index ${index}`);
-    return keys[0];
-  }
-}
+        'descriptionNume
