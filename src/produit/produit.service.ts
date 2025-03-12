@@ -49,11 +49,19 @@ export class ProduitService {
   }
 
   async getKeyByName(nom: string): Promise<CatalogueCle | undefined> {
+    // Nettoyer le nom s'il contient "-reproduction-cle.html"
+    if (nom.endsWith('-reproduction-cle.html')) {
+      nom = nom.replace(/-reproduction-cle\.html$/, '');
+    }
     this.logger.log(`Service: Recherche de la clé avec le nom: ${nom}`);
     return this.catalogueCleRepository.findOne({ where: { nom } });
   }
 
   async findBestKeyByName(nom: string): Promise<CatalogueCle> {
+    // Nettoyer le nom s'il contient "-reproduction-cle.html"
+    if (nom.endsWith('-reproduction-cle.html')) {
+      nom = nom.replace(/-reproduction-cle\.html$/, '');
+    }
     this.logger.log(`Service: Recherche de la meilleure correspondance pour le nom "${nom}"`);
     
     // Recherche initiale avec ILIKE sur le nom (insensible à la casse)
@@ -146,7 +154,7 @@ export class ProduitService {
         'imageUrl',
         'referenceEbauche',
         'typeReproduction',
-        'descriptionNumero', // Correction ici
+        'descriptionNumero',
         'estCleAPasse',
         'prixCleAPasse',
         'besoinPhoto',
