@@ -1,4 +1,3 @@
-// config/mail.config.ts
 export default () => {
   const host = process.env.SMTP_HOST;
   return {
