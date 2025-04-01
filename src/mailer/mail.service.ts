@@ -23,12 +23,20 @@ export class MailService {
         pass: mailCfg.pass,
       },
     });
+
+    // Vérification de la configuration SMTP
+    this.transporter.verify((error, success) => {
+      if (error) {
+        console.error('Erreur de configuration SMTP:', error);
+      } else {
+        console.log('Configuration SMTP OK');
+      }
+    });
   }
 
   /**
    * Génère le PDF de la facture en s'inspirant de la template Pug,
    * avec les informations dynamiques du client et du produit.
-   * La génération du PDF ne comprend plus l'importation du logo.
    */
   private generateInvoicePdf(mailDto: MailDto): Promise<Buffer> {
     return new Promise((resolve, reject) => {
@@ -43,8 +51,6 @@ export class MailService {
 
         // Barre de couleur en haut du document
         doc.rect(50, 50, doc.page.width - 100, 80).fill('#2E7D32');
-
-        // Suppression de l'importation et de l'affichage du logo
 
         // Titre de la facture et sous-titre
         doc
@@ -262,14 +268,16 @@ export class MailService {
 
       await this.transporter.sendMail(mailOptions);
     } catch (error) {
-      console.error('Erreur lors de l\'envoi de l\'email:', error);
-      throw new InternalServerErrorException('Erreur lors de l\'envoi de l\'email');
+      console.error("Erreur lors de l'envoi de l'email:", error);
+      throw new InternalServerErrorException("Erreur lors de l'envoi de l'email");
     }
   }
 
   async sendOrderCancellationMail(cancelDto: CancelMailDto) {
     try {
       const { nom, adresseMail, produitsAnnules, prix, reason } = cancelDto;
+      // Vérifier et formater le prix pour éviter les erreurs
+      const prixFormatted = (typeof prix === 'number' && !isNaN(prix)) ? prix.toFixed(2) : '0.00';
 
       const htmlContent = `
       <!DOCTYPE html>
@@ -297,8 +305,8 @@ export class MailService {
           <p>Nous vous informons que votre commande a été annulée.</p>
           <p><strong>Détails de la commande annulée :</strong></p>
           <ul>
-            <li><strong>Produits annulés :</strong> ${produitsAnnules.join(', ')}</li>
-            <li><strong>Prix total :</strong> ${prix.toFixed(2)} €</li>
+            <li><strong>Produits annulés :</strong> ${Array.isArray(produitsAnnules) ? produitsAnnules.join(', ') : produitsAnnules}</li>
+            <li><strong>Prix total :</strong> ${prixFormatted} €</li>
           </ul>
           <p><strong>Raison de l'annulation :</strong> ${reason}</p>
           <div class="contact-info">
@@ -328,8 +336,8 @@ export class MailService {
 
       await this.transporter.sendMail(mailOptions);
     } catch (error) {
-      console.error('Erreur lors de l\'envoi de l\'email d\'annulation:', error);
-      throw new InternalServerErrorException('Erreur lors de l\'envoi de l\'email d\'annulation');
+      console.error("Erreur lors de l'envoi de l'email d'annulation:", error);
+      throw new InternalServerErrorException("Erreur lors de l'envoi de l'email d'annulation");
     }
   }
 }
