@@ -1,4 +1,3 @@
-// cancel-mail.dto.ts
 import { IsString, IsEmail, IsArray, IsNumber } from 'class-validator';
 import { Transform } from 'class-transformer';
 
