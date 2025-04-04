@@ -1,14 +1,12 @@
 export default () => {
-  const host = process.env.SMTP_HOST;
+  const host = process.env.SMTP_HOST || 'ssl0.ovh.net';  // Utilisation de la valeur par défaut si aucune variable n'est définie
   return {
     mail: {
-      // Utilise le host défini en variable d'environnement
-      // sauf si celui-ci est "mxplan-vrb1lwo-1", auquel cas on utilise le fallback 'webmail.mail.ovh.net'
-      host: host && host !== 'mxplan-vrb1lwo-1' ? host : 'webmail.mail.ovh.net',
+      host: host,
       port: parseInt(process.env.SMTP_PORT, 10) || 587,
       secure: process.env.SMTP_SECURE === 'true',
       user: process.env.SMTP_USER || 'cleserviceClient@cleservice.com',
-      pass: process.env.SMTP_PASS || 'Eliseo3009@',
+      pass: process.env.SMTP_PASS || 'Eliseo3009@',  // Veuillez changer ce mot de passe si nécessaire
       from: process.env.EMAIL_FROM || 'cleserviceClient@cleservice.com',
     },
   };
