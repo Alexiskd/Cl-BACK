@@ -76,7 +76,6 @@ export class MailService {
       </html>
       `;
 
-      // Options de l'email
       const mailOptions = {
         from: this.mailFrom,
         to: adresseMail,
@@ -84,7 +83,6 @@ export class MailService {
         html: htmlContent,
       };
 
-      // Envoi de l'email
       await this.transporter.sendMail(mailOptions);
       console.log("Email de confirmation envoyé avec succès à :", adresseMail);
     } catch (error) {
@@ -95,10 +93,8 @@ export class MailService {
 
   async sendOrderCancellationMail(cancelMailDto: CancelMailDto): Promise<void> {
     try {
-      // Extraction des propriétés depuis CancelMailDto
       const { nom, adresseMail, cancelMessage } = cancelMailDto;
 
-      // Création du contenu HTML de l'email d'annulation
       const htmlContent = `
       <!DOCTYPE html>
       <html lang="fr">
@@ -137,7 +133,6 @@ export class MailService {
         html: htmlContent,
       };
 
-      // Envoi de l'email d'annulation
       await this.transporter.sendMail(mailOptions);
       console.log("Email d'annulation envoyé avec succès à :", adresseMail);
     } catch (error) {
