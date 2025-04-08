@@ -35,7 +35,7 @@ export class CatalogueCle {
   })
   typeReproduction: TypeReproduction;
 
-  // Description pour le mode "numero"
+  // Description associée au mode "numero"
   @Column({ type: 'text', nullable: true, default: '' })
   descriptionNumero: string;
 
