@@ -1,11 +1,7 @@
-import { IsString, IsArray, IsNumber, IsEmail, IsOptional, IsUUID } from 'class-validator';
+import { IsString, IsEmail, IsArray, IsNumber } from 'class-validator';
 import { Transform } from 'class-transformer';
 
 export class MailDto {
-  @IsOptional()
-  @IsUUID()
-  id?: string;
-
   @IsString()
   nom: string;
 
@@ -25,6 +21,6 @@ export class MailDto {
   @IsString()
   shippingMethod: string;
 
-  @IsArray()
-  typeLivraison: string[];
+  @IsString()
+  typeLivraison: string;
 }
