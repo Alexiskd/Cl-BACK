@@ -69,7 +69,7 @@ export class CreateKeyDto {
   @IsOptional()
   besoinNumeroCarte?: boolean;
 
-  // Frais de dossier avec valeur par défaut (sera mis à 0 dans le service si non fourni)
+  // Frais de dossier (si aucun montant n'est fourni, le service devra mettre 0)
   @IsNumber()
   @IsOptional()
   fraisDeDossier?: number;
