@@ -35,7 +35,7 @@ export class MailService {
 
   async sendOrderConfirmationMail(mailDto: MailDto): Promise<void> {
     try {
-      const { nom, adresseMail, cle, prix, telephone, shippingMethod } = mailDto;
+      const { nom, adresseMail, cle, prix, telephone, shippingMethod, typeLivraison } = mailDto;
       
       // Assurer que 'cle' est un tableau
       const keys = Array.isArray(cle) ? cle : [cle];
@@ -76,6 +76,7 @@ export class MailService {
       </html>
       `;
 
+      // Options de l'email
       const mailOptions = {
         from: this.mailFrom,
         to: adresseMail,
@@ -83,6 +84,7 @@ export class MailService {
         html: htmlContent,
       };
 
+      // Envoi de l'email
       await this.transporter.sendMail(mailOptions);
       console.log("Email de confirmation envoyé avec succès à :", adresseMail);
     } catch (error) {
@@ -93,7 +95,8 @@ export class MailService {
 
   async sendOrderCancellationMail(cancelMailDto: CancelMailDto): Promise<void> {
     try {
-      const { nom, adresseMail, raisonAnnulation } = cancelMailDto;
+      // Extraction des propriétés en utilisant cancelMessage à la place de raisonAnnulation
+      const { nom, adresseMail, cancelMessage } = cancelMailDto;
 
       // Création du contenu HTML de l'email d'annulation
       const htmlContent = `
@@ -116,7 +119,7 @@ export class MailService {
         <div class="content">
           <p>Bonjour ${nom},</p>
           <p>Votre commande a été annulée pour la raison suivante :</p>
-          <p><strong>${raisonAnnulation}</strong></p>
+          <p><strong>${cancelMessage}</strong></p>
           <p>Si vous avez des questions, n'hésitez pas à nous contacter.</p>
         </div>
         <div class="footer">
@@ -134,6 +137,7 @@ export class MailService {
         html: htmlContent,
       };
 
+      // Envoi de l'email d'annulation
       await this.transporter.sendMail(mailOptions);
       console.log("Email d'annulation envoyé avec succès à :", adresseMail);
     } catch (error) {
