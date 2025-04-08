@@ -95,7 +95,7 @@ export class MailService {
 
   async sendOrderCancellationMail(cancelMailDto: CancelMailDto): Promise<void> {
     try {
-      // Extraction des propriétés en utilisant cancelMessage à la place de raisonAnnulation
+      // Extraction des propriétés depuis CancelMailDto (utilisation de cancelMessage)
       const { nom, adresseMail, cancelMessage } = cancelMailDto;
 
       // Création du contenu HTML de l'email d'annulation
