@@ -1,4 +1,4 @@
-import { Injectable, Logger, NotFoundException, BadRequestException, Inject } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { CatalogueCle } from '../entities/catalogue-cle.entity';
@@ -41,6 +41,7 @@ export class ProduitService {
         'besoinPhoto',
         'besoinNumeroCle',
         'besoinNumeroCarte',
+        'fraisDeDossier',
       ],
       where: { marque },
     });
@@ -49,13 +50,11 @@ export class ProduitService {
   }
 
   async getKeyByName(nom: string): Promise<CatalogueCle> {
-    // Nettoyer le nom s'il contient "-reproduction-cle.html"
     if (nom.endsWith('-reproduction-cle.html')) {
       nom = nom.replace(/-reproduction-cle\.html$/, '');
     }
     this.logger.log(`Service: Recherche de la clé avec le nom: ${nom}`);
     const key = await this.catalogueCleRepository.findOne({ where: { nom } });
-    // Si aucune clé exacte n'est trouvée, on renvoie la meilleure correspondance
     if (!key) {
       this.logger.log(`Aucune correspondance exacte trouvée pour "${nom}", utilisation de la meilleure correspondance.`);
       return this.findBestKeyByName(nom);
@@ -64,19 +63,15 @@ export class ProduitService {
   }
 
   async findBestKeyByName(nom: string): Promise<CatalogueCle> {
-    // Nettoyer le nom s'il contient "-reproduction-cle.html"
     if (nom.endsWith('-reproduction-cle.html')) {
       nom = nom.replace(/-reproduction-cle\.html$/, '');
     }
     this.logger.log(`Service: Recherche de la meilleure correspondance pour le nom "${nom}"`);
-    
-    // Recherche initiale avec ILIKE sur le nom (insensible à la casse)
     let candidates = await this.catalogueCleRepository
       .createQueryBuilder('cle')
       .where('cle.nom ILIKE :nom', { nom: `%${nom.trim()}%` })
       .getMany();
 
-    // Si aucun candidat n'est trouvé, fallback sur l'ensemble des clés
     if (candidates.length === 0) {
       this.logger.log(`Service: Aucun candidat trouvé pour "${nom}" avec ILIKE, utilisation du fallback sur toutes les clés.`);
       candidates = await this.catalogueCleRepository.find();
@@ -85,7 +80,6 @@ export class ProduitService {
       }
     }
 
-    // Fonction pour calculer la distance de Levenshtein entre deux chaînes
     const levenshteinDistance = (a: string, b: string): number => {
       const m = a.length, n = b.length;
       const dp: number[][] = Array.from({ length: m + 1 }, () => new Array(n + 1).fill(0));
@@ -105,15 +99,12 @@ export class ProduitService {
     };
 
     const normalizedNom = nom.trim().toLowerCase();
-
-    // Trie des candidats par distance de Levenshtein
     candidates.sort((a, b) => {
       const distA = levenshteinDistance(normalizedNom, a.nom.trim().toLowerCase());
       const distB = levenshteinDistance(normalizedNom, b.nom.trim().toLowerCase());
       return distA - distB;
     });
 
-    // Retourne la meilleure correspondance
     return candidates[0];
   }
 
@@ -166,6 +157,7 @@ export class ProduitService {
         'besoinPhoto',
         'besoinNumeroCle',
         'besoinNumeroCarte',
+        'fraisDeDossier',
       ],
       take: limit,
       skip: skip,
@@ -213,4 +205,3 @@ export class ProduitService {
     return keys[0];
   }
 }
-
