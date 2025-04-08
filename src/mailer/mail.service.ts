@@ -37,7 +37,7 @@ export class MailService {
     try {
       const { nom, adresseMail, cle, prix, telephone, shippingMethod, typeLivraison } = mailDto;
       
-      // Assurez-vous que 'cle' est un tableau
+      // Assurer que 'cle' est un tableau
       const keys = Array.isArray(cle) ? cle : [cle];
 
       // Création du contenu HTML de l'email de confirmation
@@ -95,7 +95,7 @@ export class MailService {
 
   async sendOrderCancellationMail(cancelMailDto: CancelMailDto): Promise<void> {
     try {
-      // Extraction des propriétés avec la propriété 'cancelMessage' (à définir dans CancelMailDto)
+      // Extraction des propriétés depuis CancelMailDto
       const { nom, adresseMail, cancelMessage } = cancelMailDto;
 
       // Création du contenu HTML de l'email d'annulation
@@ -137,6 +137,7 @@ export class MailService {
         html: htmlContent,
       };
 
+      // Envoi de l'email d'annulation
       await this.transporter.sendMail(mailOptions);
       console.log("Email d'annulation envoyé avec succès à :", adresseMail);
     } catch (error) {
