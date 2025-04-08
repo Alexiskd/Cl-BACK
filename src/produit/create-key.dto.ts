@@ -69,4 +69,9 @@ export class CreateKeyDto {
   @IsBoolean()
   @IsOptional()
   besoinNumeroCarte?: boolean;
+
+  // Nouveau champ : frais de dossier (par défaut 0)
+  @IsNumber()
+  @IsOptional()
+  fraisDeDossier?: number;
 }
