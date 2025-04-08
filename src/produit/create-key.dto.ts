@@ -1,3 +1,5 @@
+import { IsString, IsNotEmpty, IsBoolean, IsNumber, IsOptional, IsEnum } from 'class-validator';
+
 export enum TypeReproduction {
   COPIE = 'copie',
   NUMERO = 'numero',
@@ -67,7 +69,7 @@ export class CreateKeyDto {
   @IsOptional()
   besoinNumeroCarte?: boolean;
 
-  // Frais de dossier avec valeur par défaut de 0
+  // Frais de dossier (si aucun montant n'est fourni, le service devra mettre 0)
   @IsNumber()
   @IsOptional()
   fraisDeDossier?: number;
