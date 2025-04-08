@@ -1,14 +1,16 @@
-import { IsString, IsEmail, IsArray, IsNumber } from 'class-validator';
+import { IsString, IsEmail, IsArray, IsNumber, IsNotEmpty } from 'class-validator';
 import { Transform } from 'class-transformer';
 
 export class CancelMailDto {
   @IsString()
+  @IsNotEmpty()
   nom: string;
 
   @IsEmail()
   adresseMail: string;
 
   @IsArray()
+  @IsString({ each: true })
   produitsAnnules: string[];
 
   @IsNumber()
@@ -16,5 +18,6 @@ export class CancelMailDto {
   prix: number;
 
   @IsString()
-  reason: string;
+  @IsNotEmpty()
+  cancelMessage: string;
 }
