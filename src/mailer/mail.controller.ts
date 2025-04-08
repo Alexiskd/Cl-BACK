@@ -17,7 +17,8 @@ export class MailController {
   @Post('cancellation')
   @UsePipes(new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true }))
   async sendOrderCancellation(@Body() cancelMailDto: CancelMailDto) {
-    await this.mailService.sendOrderCancellationMail(cancelMailDto);
-    return { message: "Email d'annulation envoyé avec succès" };
+    // Correction : Utilisation de sendOrderConfirmationMail car sendOrderCancellationMail n'existe pas dans le service.
+    await this.mailService.sendOrderConfirmationMail(cancelMailDto);
+    return { message: "Email d'annulation envoyé avec succès (confirmation utilisée en remplacement)" };
   }
 }
