@@ -63,4 +63,8 @@ export class CatalogueCle {
   // Indique si le numéro de carte est requis
   @Column({ default: false })
   besoinNumeroCarte: boolean;
+
+  // Nouveau champ : frais de dossier avec valeur par défaut 0
+  @Column('decimal', { default: 0 })
+  fraisDeDossier: number;
 }
