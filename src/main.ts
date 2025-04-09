@@ -13,22 +13,21 @@ async function bootstrap() {
   app.use(json({ limit: '10mb' }));
   app.use(urlencoded({ limit: '10mb', extended: true }));
 
-  // Activer CORS en autorisant plusieurs origines (par exemple, pour le développement)
+  // Définition des origines autorisées pour CORS
   const allowedOrigins = [
-  process.env.CORS_ORIGIN || 'http://localhost:5173',
-   'https://frontendcleservice.onrender.com/', 
+    process.env.CORS_ORIGIN || 'http://localhost:5173',
+    'https://frontendcleservice.onrender.com/',
     'https://frontendcleservice.onrender.com',
-  'https://frontend-fkzn.onrender.com/',
-  'https://cleservice.com/',
-  'https://www.cleservice.com',
-  'https://2f24-90-90-24-19.ngrok-free.app',
-  'http://localhost:5174',
-  'http://localhost:5175',
-  'http://localhost:4173', // Removed trailing slash here
-];
+    'https://frontend-fkzn.onrender.com/',
+    'https://cleservice.com/',
+    'https://www.cleservice.com',
+    'https://2f24-90-90-24-19.ngrok-free.app',
+    'http://localhost:5174',
+    'http://localhost:5175',
+    'http://localhost:4173', // Sans slash final
+  ];
 
-  
-
+  // Activer CORS en vérifiant l'origine de la requête
   app.enableCors({
     origin: (origin, callback) => {
       // Autoriser les requêtes sans origine (ex : Postman ou scripts internes)
@@ -36,7 +35,7 @@ async function bootstrap() {
         return callback(null, true);
       }
       if (allowedOrigins.indexOf(origin) !== -1) {
-        // Retourne l'origine réelle afin que l'en-tête Access-Control-Allow-Origin soit correct
+        // Retourner l'origine réelle pour que l'en-tête Access-Control-Allow-Origin soit correct
         return callback(null, origin);
       } else {
         return callback(new Error(`Origin ${origin} non autorisée par CORS`));
@@ -68,7 +67,7 @@ async function bootstrap() {
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('api', app, document);
 
-  // Utilisation du port 3000
+  // Définir le port d'écoute de l'application
   const port = 3000;
   await app.listen(port, '0.0.0.0');
   logger.log(`Application running on port ${port}`);
