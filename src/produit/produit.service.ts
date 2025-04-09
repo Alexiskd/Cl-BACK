@@ -38,7 +38,6 @@ export class ProduitService {
         'descriptionNumero',
         'estCleAPasse',
         'prixCleAPasse',
-        // =================== Nouveaux champs ===================
         'besoinPhoto',
         'besoinNumeroCle',
         'besoinNumeroCarte',
@@ -49,17 +48,13 @@ export class ProduitService {
     return keys;
   }
 
-  async getKeyByName(nom: string): Promise<CatalogueCle> {
+  async getKeyByName(nom: string): Promise<CatalogueCle | undefined> {
     this.logger.log(`Service: Recherche de la clé avec le nom: ${nom}`);
-    const key = await this.catalogueCleRepository.findOne({ where: { nom } });
-    if (!key) {
-      throw new NotFoundException('Produit introuvable.');
-    }
-    return key;
+    return this.catalogueCleRepository.findOne({ where: { nom } });
   }
 
-  async findTop2KeysByName(nom: string): Promise<CatalogueCle[]> {
-    this.logger.log(`Service: Recherche des meilleures correspondances pour le nom "${nom}"`);
+  async findBestKeyByName(nom: string): Promise<CatalogueCle> {
+    this.logger.log(`Service: Recherche de la meilleure correspondance pour le nom "${nom}"`);
     const candidates = await this.catalogueCleRepository
       .createQueryBuilder('cle')
       .where('cle.nom ILIKE :nom', { nom: `%${nom.trim()}%` })
@@ -67,6 +62,7 @@ export class ProduitService {
     if (candidates.length === 0) {
       throw new NotFoundException(`Aucune clé trouvée pour le nom "${nom}"`);
     }
+
     const levenshteinDistance = (a: string, b: string): number => {
       const m = a.length, n = b.length;
       const dp: number[][] = Array.from({ length: m + 1 }, () => new Array(n + 1).fill(0));
@@ -75,16 +71,22 @@ export class ProduitService {
       for (let i = 1; i <= m; i++) {
         for (let j = 1; j <= n; j++) {
           const cost = a[i - 1] === b[j - 1] ? 0 : 1;
-          dp[i][j] = Math.min(dp[i - 1][j] + 1, dp[i][j - 1] + 1, dp[i - 1][j - 1] + cost);
+          dp[i][j] = Math.min(
+            dp[i - 1][j] + 1,
+            dp[i][j - 1] + 1,
+            dp[i - 1][j - 1] + cost
+          );
         }
       }
       return dp[m][n];
     };
+
     candidates.sort((a, b) =>
       levenshteinDistance(nom.trim().toLowerCase(), a.nom.trim().toLowerCase()) -
       levenshteinDistance(nom.trim().toLowerCase(), b.nom.trim().toLowerCase())
     );
-    return candidates.slice(0, 2);
+
+    return candidates[0];
   }
 
   async updateKeyByName(nom: string, updates: Partial<CatalogueCle>): Promise<CatalogueCle> {
@@ -133,7 +135,6 @@ export class ProduitService {
         'descriptionNumero',
         'estCleAPasse',
         'prixCleAPasse',
-        // =================== Nouveaux champs ===================
         'besoinPhoto',
         'besoinNumeroCle',
         'besoinNumeroCarte',
