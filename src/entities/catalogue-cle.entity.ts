@@ -27,7 +27,7 @@ export class CatalogueCle {
   @Column({ type: 'varchar', nullable: true, default: null })
   referenceEbauche?: string;
 
-  // Champ existant : type de reproduction possible (copie, numero, ia)
+  // Type de reproduction (copie, numero, ia)
   @Column({
     type: 'enum',
     enum: TypeReproduction,
@@ -35,19 +35,19 @@ export class CatalogueCle {
   })
   typeReproduction: TypeReproduction;
 
-  // Champ existant : description associée au mode "numero"
+  // Description associée au mode "numero"
   @Column({ type: 'text', nullable: true, default: '' })
   descriptionNumero: string;
 
-  // Nouveau champ : description générale du produit
+  // Description générale du produit
   @Column({ type: 'text', nullable: true })
   descriptionProduit: string;
 
-  // Champ existant : booléen indiquant si c'est une clé à passe
+  // Indique si c'est une clé à passe
   @Column({ default: false })
   estCleAPasse: boolean;
 
-  // Champ existant : prix de la clé en mode passe
+  // Prix de la clé en mode passe
   @Column('decimal', { nullable: true })
   prixCleAPasse: number;
 
@@ -63,5 +63,8 @@ export class CatalogueCle {
   // Indique si le numéro de carte est requis
   @Column({ default: false })
   besoinNumeroCarte: boolean;
-}
+
+  // Frais de dossier avec valeur par défaut 0
+  @Column('decimal', { default: 0 })
+  fraisDeDossier: number;
 }
