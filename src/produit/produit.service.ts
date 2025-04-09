@@ -50,10 +50,10 @@ export class ProduitService {
 
   async getKeyByName(nom: string): Promise<CatalogueCle> {
     this.logger.log(`Service: Recherche de la clé avec le nom: ${nom}`);
-    // Utilisation d'un query builder pour une recherche insensible à la casse
+    // Recherche insensible à la casse avec ILIKE
     const key = await this.catalogueCleRepository
       .createQueryBuilder('cle')
-      .where('LOWER(cle.nom) = LOWER(:nom)', { nom: nom.trim() })
+      .where('cle.nom ILIKE :nom', { nom: nom.trim() })
       .getOne();
     if (!key) {
       throw new NotFoundException('Produit introuvable.');
@@ -88,6 +88,15 @@ export class ProduitService {
       levenshteinDistance(nom.trim().toLowerCase(), b.nom.trim().toLowerCase())
     );
     return candidates.slice(0, 2);
+  }
+
+  async findBestKeyByName(nom: string): Promise<CatalogueCle> {
+    this.logger.log(`Service: Recherche de la meilleure correspondance pour le nom "${nom}"`);
+    const topKeys = await this.findTop2KeysByName(nom);
+    if (!topKeys || topKeys.length === 0) {
+      throw new NotFoundException(`Aucune clé trouvée pour le nom "${nom}"`);
+    }
+    return topKeys[0];
   }
 
   async updateKeyByName(nom: string, updates: Partial<CatalogueCle>): Promise<CatalogueCle> {
