@@ -31,7 +31,7 @@ export class ProduitController {
 
   // Recherche une clé par son nom exact
   @Get('cles/by-name')
-  async getKeyByName(@Query('nom') nom: string): Promise<CatalogueCle | undefined> {
+  async getKeyByName(@Query('nom') nom: string): Promise<CatalogueCle> {
     this.logger.log(`Requête reçue sur /cles/by-name avec nom: ${nom}`);
     return this.produitService.getKeyByName(nom);
   }
