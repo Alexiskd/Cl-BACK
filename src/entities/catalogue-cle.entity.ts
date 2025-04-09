@@ -68,3 +68,4 @@ export class CatalogueCle {
   @Column('decimal', { default: 0 })
   fraisDeDossier: number;
 }
+
