@@ -70,7 +70,7 @@ export class ProduitController {
       besoinPhoto: newKey.besoinPhoto ?? false,
       besoinNumeroCle: newKey.besoinNumeroCle ?? false,
       besoinNumeroCarte: newKey.besoinNumeroCarte ?? false,
-      // Ajout du champ fraisDeDossier avec défaut à 0€
+      // Ajout du champ fraisDeDossier, valeur par défaut 0 si non fourni
       fraisDeDossier: newKey.fraisDeDossier ?? 0,
     };
     this.logger.log(`Requête POST reçue pour ajouter la clé: ${JSON.stringify(keyToAdd)}`);
@@ -97,7 +97,7 @@ export class ProduitController {
       besoinPhoto: newKey.besoinPhoto ?? false,
       besoinNumeroCle: newKey.besoinNumeroCle ?? false,
       besoinNumeroCarte: newKey.besoinNumeroCarte ?? false,
-      // Ajout du champ fraisDeDossier avec défaut à 0€
+      // Ajout du champ fraisDeDossier, par défaut à 0
       fraisDeDossier: newKey.fraisDeDossier ?? 0,
     }));
     this.logger.log(`Requête POST reçue pour ajouter ${keysToAdd.length} clés.`);
