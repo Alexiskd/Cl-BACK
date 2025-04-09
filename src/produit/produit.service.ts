@@ -49,13 +49,9 @@ export class ProduitService {
     return keys;
   }
 
-  async getKeyByName(nom: string): Promise<CatalogueCle> {
+  async getKeyByName(nom: string): Promise<CatalogueCle | undefined> {
     this.logger.log(`Service: Recherche de la clé avec le nom: ${nom}`);
-    const key = await this.catalogueCleRepository.findOne({ where: { nom } });
-    if (!key) {
-      throw new NotFoundException('Produit introuvable.');
-    }
-    return key;
+    return this.catalogueCleRepository.findOne({ where: { nom } });
   }
 
   async findTop2KeysByName(nom: string): Promise<CatalogueCle[]> {
