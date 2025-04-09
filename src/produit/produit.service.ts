@@ -17,36 +17,41 @@ export class ProduitService {
 
   async getKeysByMarque(marque: string): Promise<CatalogueCle[]> {
     this.logger.log(`Service: Recherche des clés pour la marque: ${marque}`);
-    if (!marque) return this.getAllKeys(10, 0);
-    const cacheKey = `keysByMarque_${marque}`;
-    const cached = await this.cacheManager.get<CatalogueCle[]>(cacheKey);
-    if (cached) {
-      this.logger.log(`Service: Clés récupérées du cache pour marque ${marque}`);
-      return cached;
+    try {
+      if (!marque) return this.getAllKeys(10, 0);
+      const cacheKey = `keysByMarque_${marque}`;
+      const cached = await this.cacheManager.get<CatalogueCle[]>(cacheKey);
+      if (cached) {
+        this.logger.log(`Service: Clés récupérées du cache pour marque ${marque}`);
+        return cached;
+      }
+      const keys = await this.catalogueCleRepository.find({
+        select: [
+          'id',
+          'nom',
+          'marque',
+          'prix',
+          'prixSansCartePropriete',
+          'cleAvecCartePropriete',
+          'imageUrl',
+          'referenceEbauche',
+          'typeReproduction',
+          'descriptionNumero',
+          'estCleAPasse',
+          'prixCleAPasse',
+          'besoinPhoto',
+          'besoinNumeroCle',
+          'besoinNumeroCarte',
+          'fraisDeDossier',
+        ],
+        where: { marque },
+      });
+      await this.cacheManager.set(cacheKey, keys, 10);
+      return keys;
+    } catch (error) {
+      this.logger.error(`Erreur lors de la récupération des clés pour ${marque}`, error.stack);
+      throw new NotFoundException(`Erreur lors de la récupération des clés pour ${marque}`);
     }
-    const keys = await this.catalogueCleRepository.find({
-      select: [
-        'id',
-        'nom',
-        'marque',
-        'prix',
-        'prixSansCartePropriete',
-        'cleAvecCartePropriete',
-        'imageUrl',
-        'referenceEbauche',
-        'typeReproduction',
-        'descriptionNumero',
-        'estCleAPasse',
-        'prixCleAPasse',
-        'besoinPhoto',
-        'besoinNumeroCle',
-        'besoinNumeroCarte',
-        'fraisDeDossier',
-      ],
-      where: { marque },
-    });
-    await this.cacheManager.set(cacheKey, keys, 10);
-    return keys;
   }
 
   async getKeyByName(nom: string): Promise<CatalogueCle> {
