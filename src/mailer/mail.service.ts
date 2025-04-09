@@ -36,7 +36,7 @@ export class MailService {
   async sendOrderConfirmationMail(mailDto: MailDto): Promise<void> {
     try {
       const { nom, adresseMail, cle, prix, telephone, shippingMethod, typeLivraison } = mailDto;
-      
+
       // Assurer que 'cle' est un tableau
       const keys = Array.isArray(cle) ? cle : [cle];
 
