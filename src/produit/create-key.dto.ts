@@ -41,7 +41,7 @@ export class CreateKeyDto {
   @IsOptional()
   descriptionNumero?: string;
 
-  // Nouveau champ : description générale du produit
+  // Description générale du produit
   @IsString()
   @IsOptional()
   descriptionProduit?: string;
@@ -54,7 +54,6 @@ export class CreateKeyDto {
   @IsOptional()
   prixCleAPasse?: number;
 
-  // ===================== Nouveaux champs =====================
   // Indique si des photos sont requises
   @IsBoolean()
   @IsOptional()
@@ -69,4 +68,9 @@ export class CreateKeyDto {
   @IsBoolean()
   @IsOptional()
   besoinNumeroCarte?: boolean;
+
+  // Frais de dossier (sera mis à 0 si non fourni)
+  @IsNumber()
+  @IsOptional()
+  fraisDeDossier?: number;
 }
