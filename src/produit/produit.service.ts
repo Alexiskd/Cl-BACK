@@ -51,7 +51,11 @@ export class ProduitService {
 
   async getKeyByName(nom: string): Promise<CatalogueCle> {
     this.logger.log(`Service: Recherche de la clé avec le nom: ${nom}`);
-    const key = await this.catalogueCleRepository.findOne({ where: { nom } });
+    // Recherche insensible à la casse
+    const key = await this.catalogueCleRepository
+      .createQueryBuilder('cle')
+      .where('LOWER(cle.nom) = LOWER(:nom)', { nom: nom.trim() })
+      .getOne();
     if (!key) {
       throw new NotFoundException('Produit introuvable.');
     }
