@@ -1,58 +1,44 @@
-import { Injectable } from '@angular/core';
-// Importez le service de log ou créez-le selon votre implémentation
+import { Injectable } from '@nestjs/common';
 import { LoggerService } from '../logger/logger.service';
 
-@Injectable({
-  providedIn: 'root'
-})
+@Injectable()
 export class ProduitService {
+  // Exemple de données stockées par marque.
+  private keysByBrand: { [brand: string]: Array<{ id: number, nom: string }> } = {
+    'brandA': [{ id: 1, nom: 'CléA' }, { id: 2, nom: 'CléB' }],
+    'brandB': [{ id: 3, nom: 'CléC' }],
+  };
 
-  constructor(private logger: LoggerService) { }
+  constructor(private readonly logger: LoggerService) {}
 
   /**
-   * Récupère les clés stockées dans le cache pour une marque donnée.
-   * @param marque - La marque dont on souhaite récupérer les clés en cache.
-   * @returns Les clés récupérées ou null si non trouvées.
+   * Récupère la clé correspondant à la marque et à l’index spécifiés.
+   * @param brand La marque de la clé.
+   * @param index L’index de la clé dans le tableau associé.
+   * @returns La clé trouvée ou un message d’erreur.
    */
-  recupererCacheMarque(marque: string): any {
-    // Utilisation d'un template literal pour formater correctement la chaîne avec interpolation de variable
-    this.logger.log(`Service: Clés récupérées du cache pour marque ${marque}`);
-    
-    // Exemple de logique pour récupérer un objet en cache
-    const cache: { [key: string]: any } = {
-      'MarqueA': { id: 1, nom: 'CléA' },
-      'MarqueB': { id: 2, nom: 'CléB' }
-    };
-    
-    const result = cache[marque] || null;
-    return result;
+  getKeyByBrandAndIndex(brand: string, index: number): any {
+    this.logger.log(`Service: Récupération de la clé pour la marque ${brand} à l'index ${index}`);
+    const brandKeys = this.keysByBrand[brand];
+    if (brandKeys && index >= 0 && index < brandKeys.length) {
+      return brandKeys[index];
+    }
+    return { message: `Aucune clé trouvée pour la marque ${brand} à l'index ${index}` };
   }
 
   /**
-   * Recherche une clé par son nom.
-   * @param nom - Le nom de la clé à rechercher.
-   * @returns La clé correspondante ou la meilleure correspondance si aucune correspondance exacte n'est trouvée.
+   * Supprime la clé correspondant au nom donné.
+   * @param nom Le nom de la clé à supprimer.
    */
-  rechercherCle(nom: string): any {
-    // Journalisation de la recherche avec interpolation de variable
-    this.logger.log(`Service: Recherche de la clé avec le nom: ${nom}`);
-
-    // Exemple de logique de recherche dans un tableau d'objets
-    const cles = [
-      { id: 1, nom: 'CléA' },
-      { id: 2, nom: 'CléB' },
-      { id: 3, nom: 'CléC' }
-    ];
-
-    // Recherche d'une correspondance exacte
-    let result = cles.find(cle => cle.nom === nom);
-    
-    // Si aucune correspondance exacte, journaliser et appliquer une logique de meilleure correspondance
-    if (!result) {
-      this.logger.log(`Aucune correspondance exacte trouvée pour "${nom}", utilisation de la meilleure correspondance.`);
-      // Exemple : on recherche une clé dont le nom contient le critère recherché (en minuscule pour insensibilité à la casse)
-      result = cles.find(cle => cle.nom.toLowerCase().includes(nom.toLowerCase())) || null;
+  async deleteKeyByName(nom: string): Promise<void> {
+    this.logger.log(`Service: Suppression de la clé avec le nom "${nom}"`);
+    for (const brand in this.keysByBrand) {
+      const originalLength = this.keysByBrand[brand].length;
+      this.keysByBrand[brand] = this.keysByBrand[brand].filter(key => key.nom !== nom);
+      if (this.keysByBrand[brand].length < originalLength) {
+        // Arrête dès qu'une suppression est effectuée.
+        break;
+      }
     }
-    return result;
   }
 }
