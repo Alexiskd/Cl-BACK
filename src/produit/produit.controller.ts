@@ -70,6 +70,8 @@ export class ProduitController {
       besoinPhoto: newKey.besoinPhoto ?? false,
       besoinNumeroCle: newKey.besoinNumeroCle ?? false,
       besoinNumeroCarte: newKey.besoinNumeroCarte ?? false,
+      // Ajout de la propriété requise "fraisDeDossier" avec une valeur par défaut
+      fraisDeDossier: newKey.fraisDeDossier ?? 0,
     };
     this.logger.log(`Requête POST reçue pour ajouter la clé: ${JSON.stringify(keyToAdd)}`);
     return this.produitService.addKey(keyToAdd);
@@ -95,6 +97,8 @@ export class ProduitController {
       besoinPhoto: newKey.besoinPhoto ?? false,
       besoinNumeroCle: newKey.besoinNumeroCle ?? false,
       besoinNumeroCarte: newKey.besoinNumeroCarte ?? false,
+      // Ajout de la propriété manquante
+      fraisDeDossier: newKey.fraisDeDossier ?? 0,
     }));
     this.logger.log(`Requête POST reçue pour ajouter ${keysToAdd.length} clés.`);
     return this.produitService.addKeys(keysToAdd);
@@ -106,7 +110,7 @@ export class ProduitController {
     @Query('limit') limit?: string,
     @Query('skip') skip?: string,
   ): Promise<CatalogueCle[]> {
-    this.logger.log('Requête GET reçue sur /cles/all');
+    this.logger.log(`Requête GET reçue sur /cles/all`);
     const limitNumber = limit ? parseInt(limit, 10) : 10;
     const skipNumber = skip ? parseInt(skip, 10) : 0;
     return this.produitService.getAllKeys(limitNumber, skipNumber);
