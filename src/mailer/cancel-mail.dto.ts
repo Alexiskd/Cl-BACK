@@ -1,3 +1,4 @@
+// cancel-mail.dto.ts
 import { IsString, IsEmail, IsArray, IsNumber } from 'class-validator';
 import { Transform } from 'class-transformer';
 
@@ -16,5 +17,5 @@ export class CancelMailDto {
   prix: number;
 
   @IsString()
-  cancelMessage: string;
+  reason: string;
 }
