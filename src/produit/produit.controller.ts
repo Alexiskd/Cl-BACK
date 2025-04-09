@@ -56,6 +56,7 @@ export class ProduitController {
   // Ajout d'une nouvelle clé
   @Post('cles/add')
   async addKey(@Body() newKey: CreateKeyDto): Promise<CatalogueCle> {
+    // Ajout d'une valeur par défaut pour fraisDeDossier (0)
     const keyToAdd: CatalogueCle = {
       ...newKey,
       id: undefined,
@@ -70,6 +71,7 @@ export class ProduitController {
       besoinPhoto: newKey.besoinPhoto ?? false,
       besoinNumeroCle: newKey.besoinNumeroCle ?? false,
       besoinNumeroCarte: newKey.besoinNumeroCarte ?? false,
+      fraisDeDossier: 0, // Valeur par défaut ajoutée
     };
     this.logger.log(`Requête POST reçue pour ajouter la clé: ${JSON.stringify(keyToAdd)}`);
     return this.produitService.addKey(keyToAdd);
@@ -95,6 +97,7 @@ export class ProduitController {
       besoinPhoto: newKey.besoinPhoto ?? false,
       besoinNumeroCle: newKey.besoinNumeroCle ?? false,
       besoinNumeroCarte: newKey.besoinNumeroCarte ?? false,
+      fraisDeDossier: 0, // Valeur par défaut ajoutée
     }));
     this.logger.log(`Requête POST reçue pour ajouter ${keysToAdd.length} clés.`);
     return this.produitService.addKeys(keysToAdd);
@@ -130,4 +133,26 @@ export class ProduitController {
   // Retourne le nombre de clés pour une marque donnée
   @Get('cles/brand/:brand/count')
   async countKeysByBrand(@Param('brand') brand: string): Promise<{ count: number }> {
-    this.logger.log(`Requête GET sur /
+    this.logger.log(`Requête GET sur /cles/brand/${brand}/count`);
+    const count = await this.produitService.countKeysByBrand(brand);
+    return { count };
+  }
+
+  // Récupère une clé par son index pour une marque donnée (ordre décroissant par id)
+  @Get('cles/brand/:brand/index/:index')
+  async getKeyByBrandAndIndex(
+    @Param('brand') brand: string,
+    @Param('index') index: string,
+  ): Promise<CatalogueCle> {
+    this.logger.log(`Requête GET sur /cles/brand/${brand}/index/${index}`);
+    return this.produitService.getKeyByBrandAndIndex(brand, parseInt(index, 10));
+  }
+
+  // Suppression d'une clé par son nom
+  @Delete('cles/delete')
+  async deleteKeyByName(@Query('nom') nom: string): Promise<{ message: string }> {
+    this.logger.log(`Requête DELETE reçue pour nom: ${nom}`);
+    await this.produitService.deleteKeyByName(nom);
+    return { message: `Clé avec le nom "${nom}" a été supprimée avec succès.` };
+  }
+}
