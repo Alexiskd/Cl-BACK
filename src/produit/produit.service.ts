@@ -38,7 +38,6 @@ export class ProduitService {
         'descriptionNumero',
         'estCleAPasse',
         'prixCleAPasse',
-        // Nouveaux champs
         'besoinPhoto',
         'besoinNumeroCle',
         'besoinNumeroCarte',
@@ -51,7 +50,7 @@ export class ProduitService {
 
   async getKeyByName(nom: string): Promise<CatalogueCle> {
     this.logger.log(`Service: Recherche de la clé avec le nom: ${nom}`);
-    // Recherche insensible à la casse
+    // Utilisation d'un query builder pour une recherche insensible à la casse
     const key = await this.catalogueCleRepository
       .createQueryBuilder('cle')
       .where('LOWER(cle.nom) = LOWER(:nom)', { nom: nom.trim() })
