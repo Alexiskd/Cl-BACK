@@ -62,16 +62,16 @@ export class ProduitController {
       imageUrl: newKey.imageUrl ?? '',
       prixSansCartePropriete: newKey.prixSansCartePropriete ?? 0,
       referenceEbauche: newKey.referenceEbauche?.trim() || null,
+      // Nouveaux champs existants
       typeReproduction: newKey.typeReproduction,
       descriptionNumero: newKey.descriptionNumero ?? '',
       descriptionProduit: newKey.descriptionProduit ?? '',
       estCleAPasse: newKey.estCleAPasse ?? false,
       prixCleAPasse: newKey.prixCleAPasse ?? null,
+      // ===================== Nouveaux champs =====================
       besoinPhoto: newKey.besoinPhoto ?? false,
       besoinNumeroCle: newKey.besoinNumeroCle ?? false,
       besoinNumeroCarte: newKey.besoinNumeroCarte ?? false,
-      // Ajout du champ fraisDeDossier, valeur par défaut 0 si non fourni
-      fraisDeDossier: newKey.fraisDeDossier ?? 0,
     };
     this.logger.log(`Requête POST reçue pour ajouter la clé: ${JSON.stringify(keyToAdd)}`);
     return this.produitService.addKey(keyToAdd);
@@ -89,16 +89,16 @@ export class ProduitController {
       imageUrl: newKey.imageUrl ?? '',
       prixSansCartePropriete: newKey.prixSansCartePropriete ?? 0,
       referenceEbauche: newKey.referenceEbauche?.trim() || null,
+      // Nouveaux champs existants
       typeReproduction: newKey.typeReproduction,
       descriptionNumero: newKey.descriptionNumero ?? '',
       descriptionProduit: newKey.descriptionProduit ?? '',
       estCleAPasse: newKey.estCleAPasse ?? false,
       prixCleAPasse: newKey.prixCleAPasse ?? null,
+      // ===================== Nouveaux champs =====================
       besoinPhoto: newKey.besoinPhoto ?? false,
       besoinNumeroCle: newKey.besoinNumeroCle ?? false,
       besoinNumeroCarte: newKey.besoinNumeroCarte ?? false,
-      // Ajout du champ fraisDeDossier, par défaut à 0
-      fraisDeDossier: newKey.fraisDeDossier ?? 0,
     }));
     this.logger.log(`Requête POST reçue pour ajouter ${keysToAdd.length} clés.`);
     return this.produitService.addKeys(keysToAdd);
@@ -129,7 +129,7 @@ export class ProduitController {
     return this.produitService.getKeyByIndex(parseInt(index, 10));
   }
 
-  // ------------------ Routes par marque ------------------
+  // ------------------ Nouvelles routes pour la gestion par marque ------------------
 
   // Retourne le nombre de clés pour une marque donnée
   @Get('cles/brand/:brand/count')
