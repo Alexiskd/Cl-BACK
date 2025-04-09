@@ -29,7 +29,7 @@ export class ProduitController {
     return this.produitService.getKeysByMarque(marque);
   }
 
-  // Recherche une clé par son nom exact
+  // Recherche une clé par son nom exact (avec accentuation corrigée)
   @Get('cles/by-name')
   async getKeyByName(@Query('nom') nom: string): Promise<CatalogueCle | undefined> {
     this.logger.log(`Requête reçue sur /cles/by-name avec nom: ${nom}`);
@@ -130,26 +130,4 @@ export class ProduitController {
   // Retourne le nombre de clés pour une marque donnée
   @Get('cles/brand/:brand/count')
   async countKeysByBrand(@Param('brand') brand: string): Promise<{ count: number }> {
-    this.logger.log(`Requête GET sur /cles/brand/${brand}/count`);
-    const count = await this.produitService.countKeysByBrand(brand);
-    return { count };
-  }
-
-  // Récupère une clé par son index pour une marque donnée (ordre décroissant par id)
-  @Get('cles/brand/:brand/index/:index')
-  async getKeyByBrandAndIndex(
-    @Param('brand') brand: string,
-    @Param('index') index: string,
-  ): Promise<CatalogueCle> {
-    this.logger.log(`Requête GET sur /cles/brand/${brand}/index/${index}`);
-    return this.produitService.getKeyByBrandAndIndex(brand, parseInt(index, 10));
-  }
-
-  // Suppression d'une clé par son nom
-  @Delete('cles/delete')
-  async deleteKeyByName(@Query('nom') nom: string): Promise<{ message: string }> {
-    this.logger.log(`Requête DELETE reçue pour nom: ${nom}`);
-    await this.produitService.deleteKeyByName(nom);
-    return { message: `Clé avec le nom "${nom}" a été supprimée avec succès.` };
-  }
-}
+    this.logger.log(`Requête GET sur /
