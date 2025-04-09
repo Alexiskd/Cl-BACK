@@ -71,7 +71,11 @@ export class ProduitService {
       for (let i = 1; i <= m; i++) {
         for (let j = 1; j <= n; j++) {
           const cost = a[i - 1] === b[j - 1] ? 0 : 1;
-          dp[i][j] = Math.min(dp[i - 1][j] + 1, dp[i][j - 1] + 1, dp[i - 1][j - 1] + cost);
+          dp[i][j] = Math.min(
+            dp[i - 1][j] + 1,
+            dp[i][j - 1] + 1,
+            dp[i - 1][j - 1] + cost
+          );
         }
       }
       return dp[m][n];
@@ -109,74 +113,3 @@ export class ProduitService {
 
   async getAllKeys(limit: number, skip: number): Promise<CatalogueCle[]> {
     this.logger.log(`Service: Récupération de toutes les clés (limit: ${limit}, skip: ${skip})`);
-    const cacheKey = `allKeys_${limit}_${skip}`;
-    const cached = await this.cacheManager.get<CatalogueCle[]>(cacheKey);
-    if (cached) {
-      this.logger.log('Service: Clés récupérées du cache');
-      return cached;
-    }
-    const keys = await this.catalogueCleRepository.find({
-      select: [
-        'id',
-        'nom',
-        'marque',
-        'prix',
-        'prixSansCartePropriete',
-        'cleAvecCartePropriete',
-        'imageUrl',
-        'referenceEbauche',
-        'typeReproduction',
-        'descriptionNumero',
-        'estCleAPasse',
-        'prixCleAPasse',
-        // =================== Nouveaux champs ===================
-        'besoinPhoto',
-        'besoinNumeroCle',
-        'besoinNumeroCarte',
-      ],
-      take: limit,
-      skip: skip,
-      order: { id: 'DESC' },
-    });
-    await this.cacheManager.set(cacheKey, keys, 10);
-    return keys;
-  }
-
-  async countKeys(): Promise<number> {
-    return this.catalogueCleRepository.count();
-  }
-
-  async getKeyByIndex(index: number): Promise<CatalogueCle> {
-    const keys = await this.catalogueCleRepository.find({
-      order: { id: 'DESC' },
-      skip: index,
-      take: 1,
-    });
-    if (keys.length === 0) throw new NotFoundException(`Aucune clé trouvée à l'index ${index}`);
-    return keys[0];
-  }
-
-  async deleteKeyByName(nom: string): Promise<void> {
-    this.logger.log(`Service: Suppression de la clé avec le nom: ${nom}`);
-    const result = await this.catalogueCleRepository.delete({ nom });
-    if (result.affected === 0) throw new NotFoundException(`Clé avec le nom "${nom}" introuvable`);
-    this.logger.log(`Service: Clé avec le nom "${nom}" supprimée avec succès`);
-  }
-
-  async countKeysByBrand(brand: string): Promise<number> {
-    this.logger.log(`Service: Compte des clés pour la marque: ${brand}`);
-    return this.catalogueCleRepository.count({ where: { marque: brand } });
-  }
-
-  async getKeyByBrandAndIndex(brand: string, index: number): Promise<CatalogueCle> {
-    this.logger.log(`Service: Récupération de la clé pour la marque: ${brand} à l'index: ${index}`);
-    const keys = await this.catalogueCleRepository.find({
-      where: { marque: brand },
-      order: { id: 'DESC' },
-      skip: index,
-      take: 1,
-    });
-    if (keys.length === 0) throw new NotFoundException(`Aucune clé trouvée pour la marque "${brand}" à l'index ${index}`);
-    return keys[0];
-  }
-}
