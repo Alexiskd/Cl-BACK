@@ -1,93 +1,155 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { 
+  Controller,
+  Get,
+  Query,
+  Param,
+  Put,
+  Body,
+  Post,
+  Delete,
+  Logger,
+  UseInterceptors,
+} from '@nestjs/common';
+import { ProduitService } from './produit.service';
 import { CatalogueCle } from '../entities/catalogue-cle.entity';
 import { CreateKeyDto } from './create-key.dto';
+import { LoggingInterceptor } from '../logging.interceptor';
 
-@Injectable()
-export class ProduitService {
-  private readonly logger = new Logger(ProduitService.name);
-  private keys: CatalogueCle[] = [];
+@UseInterceptors(LoggingInterceptor)
+@Controller('produit')
+export class ProduitController {
+  private readonly logger = new Logger(ProduitController.name);
 
-  async getKeysByMarque(marque: string): Promise<CatalogueCle[]> {
-    this.logger.log(`getKeysByMarque: Recherche pour la marque ${marque}`);
-    return this.keys.filter(key => key.marque === marque);
+  constructor(private readonly produitService: ProduitService) {}
+
+  // Récupère les clés pour une marque donnée
+  @Get('cles')
+  async getKeysByMarque(@Query('marque') marque: string): Promise<CatalogueCle[]> {
+    this.logger.log(Requête reçue sur /cles avec marque: ${marque});
+    return this.produitService.getKeysByMarque(marque);
   }
 
-  async getKeyByName(nom: string): Promise<CatalogueCle | undefined> {
-    this.logger.log(`getKeyByName: Recherche de la clé avec le nom ${nom}`);
-    return this.keys.find(key => key.nom === nom);
+  // Recherche une clé par son nom exact
+  @Get('cles/by-name')
+  async getKeyByName(@Query('nom') nom: string): Promise<CatalogueCle | undefined> {
+    this.logger.log(Requête reçue sur /cles/by-name avec nom: ${nom});
+    return this.produitService.getKeyByName(nom);
   }
 
-  async findBestKeyByName(nom: string): Promise<CatalogueCle> {
-    this.logger.log(`findBestKeyByName: Recherche de la meilleure clé pour ${nom}`);
-    const key = this.keys.find(key => key.nom.includes(nom));
-    if (!key) {
-      throw new Error('Aucune clé trouvée');
+  // Recherche et retourne la meilleure correspondance selon le nom (distance de Levenshtein)
+  @Get('cles/best-by-name')
+  async bestKeyByName(@Query('nom') nom: string): Promise<CatalogueCle> {
+    this.logger.log(Requête pour la meilleure correspondance par nom: ${nom});
+    return this.produitService.findBestKeyByName(nom);
+  }
+
+  // Mise à jour d'une clé identifiée par son nom
+  @Put('cles/update')
+  async updateKeyByName(
+    @Query('nom') nom: string,
+    @Body() updates: Partial<CreateKeyDto>,
+  ): Promise<CatalogueCle> {
+    this.logger.log(Requête PUT reçue pour nom: ${nom});
+    return this.produitService.updateKeyByName(nom, updates);
+  }
+
+  // Ajout d'une nouvelle clé
+  @Post('cles/add')
+  async addKey(@Body() newKey: CreateKeyDto): Promise<CatalogueCle> {
+    const keyToAdd: CatalogueCle = {
+      ...newKey,
+      id: undefined,
+      imageUrl: newKey.imageUrl ?? '',
+      prixSansCartePropriete: newKey.prixSansCartePropriete ?? 0,
+      referenceEbauche: newKey.referenceEbauche?.trim() || null,
+      typeReproduction: newKey.typeReproduction,
+      descriptionNumero: newKey.descriptionNumero ?? '',
+      descriptionProduit: newKey.descriptionProduit ?? '',
+      estCleAPasse: newKey.estCleAPasse ?? false,
+      prixCleAPasse: newKey.prixCleAPasse ?? null,
+      besoinPhoto: newKey.besoinPhoto ?? false,
+      besoinNumeroCle: newKey.besoinNumeroCle ?? false,
+      besoinNumeroCarte: newKey.besoinNumeroCarte ?? false,
+    };
+    this.logger.log(Requête POST reçue pour ajouter la clé: ${JSON.stringify(keyToAdd)});
+    return this.produitService.addKey(keyToAdd);
+  }
+
+  // Ajout en lot de plusieurs clés
+  @Post('cles/add-many')
+  async addManyKeys(@Body() newKeys: CreateKeyDto[]): Promise<CatalogueCle[]> {
+    if (!Array.isArray(newKeys)) {
+      throw new Error('Le corps de la requête doit être un tableau de clés.');
     }
-    return key;
+    const keysToAdd: CatalogueCle[] = newKeys.map((newKey) => ({
+      ...newKey,
+      id: undefined,
+      imageUrl: newKey.imageUrl ?? '',
+      prixSansCartePropriete: newKey.prixSansCartePropriete ?? 0,
+      referenceEbauche: newKey.referenceEbauche?.trim() || null,
+      typeReproduction: newKey.typeReproduction,
+      descriptionNumero: newKey.descriptionNumero ?? '',
+      descriptionProduit: newKey.descriptionProduit ?? '',
+      estCleAPasse: newKey.estCleAPasse ?? false,
+      prixCleAPasse: newKey.prixCleAPasse ?? null,
+      besoinPhoto: newKey.besoinPhoto ?? false,
+      besoinNumeroCle: newKey.besoinNumeroCle ?? false,
+      besoinNumeroCarte: newKey.besoinNumeroCarte ?? false,
+    }));
+    this.logger.log(Requête POST reçue pour ajouter ${keysToAdd.length} clés.);
+    return this.produitService.addKeys(keysToAdd);
   }
 
-  async updateKeyByName(nom: string, updates: Partial<CreateKeyDto>): Promise<CatalogueCle> {
-    this.logger.log(`updateKeyByName: Mise à jour de la clé ${nom}`);
-    const index = this.keys.findIndex(key => key.nom === nom);
-    if (index === -1) {
-      throw new Error(`Clé avec le nom ${nom} non trouvée`);
-    }
-    this.keys[index] = { ...this.keys[index], ...updates };
-    return this.keys[index];
+  // Récupération paginée de toutes les clés
+  @Get('cles/all')
+  async getAllKeys(
+    @Query('limit') limit?: string,
+    @Query('skip') skip?: string,
+  ): Promise<CatalogueCle[]> {
+    this.logger.log('Requête GET reçue sur /cles/all');
+    const limitNumber = limit ? parseInt(limit, 10) : 10;
+    const skipNumber = skip ? parseInt(skip, 10) : 0;
+    return this.produitService.getAllKeys(limitNumber, skipNumber);
   }
 
-  async addKey(key: CatalogueCle): Promise<CatalogueCle> {
-    this.logger.log(`addKey: Ajout de la clé ${key.nom}`);
-    key.id = Date.now();
-    this.keys.push(key);
-    return key;
+  // Retourne le nombre total de clés dans la base
+  @Get('cles/count')
+  async countKeys(): Promise<{ count: number }> {
+    const count = await this.produitService.countKeys();
+    return { count };
   }
 
-  async addKeys(keys: CatalogueCle[]): Promise<CatalogueCle[]> {
-    this.logger.log(`addKeys: Ajout de ${keys.length} clés`);
-    const keysAdded: CatalogueCle[] = [];
-    for (const key of keys) {
-      key.id = Date.now() + Math.floor(Math.random() * 1000);
-      this.keys.push(key);
-      keysAdded.push(key);
-    }
-    return keysAdded;
+  // Récupère une clé par son index (ordre décroissant par id)
+  @Get('cles/index/:index')
+  async getKeyByIndex(@Param('index') index: string): Promise<CatalogueCle> {
+    return this.produitService.getKeyByIndex(parseInt(index, 10));
   }
 
-  async getAllKeys(limit: number, skip: number): Promise<CatalogueCle[]> {
-    this.logger.log(`getAllKeys: Récupération des clés (limit: ${limit}, skip: ${skip})`);
-    return this.keys.slice(skip, skip + limit);
+  // ------------------ Nouvelles routes pour la gestion par marque ------------------
+
+  // Retourne le nombre de clés pour une marque donnée
+  @Get('cles/brand/:brand/count')
+  async countKeysByBrand(@Param('brand') brand: string): Promise<{ count: number }> {
+    this.logger.log(Requête GET sur /cles/brand/${brand}/count);
+    const count = await this.produitService.countKeysByBrand(brand);
+    return { count };
   }
 
-  async countKeys(): Promise<number> {
-    this.logger.log(`countKeys: Nombre total de clés`);
-    return this.keys.length;
+  // Récupère une clé par son index pour une marque donnée (ordre décroissant par id)
+  @Get('cles/brand/:brand/index/:index')
+  async getKeyByBrandAndIndex(
+    @Param('brand') brand: string,
+    @Param('index') index: string,
+  ): Promise<CatalogueCle> {
+    this.logger.log(Requête GET sur /cles/brand/${brand}/index/${index});
+    return this.produitService.getKeyByBrandAndIndex(brand, parseInt(index, 10));
   }
 
-  async getKeyByIndex(index: number): Promise<CatalogueCle> {
-    this.logger.log(`getKeyByIndex: Récupération de la clé à l'index ${index}`);
-    if (index < 0 || index >= this.keys.length) {
-      throw new Error('Index invalide');
-    }
-    return this.keys[index];
-  }
-
-  async countKeysByBrand(brand: string): Promise<number> {
-    this.logger.log(`countKeysByBrand: Nombre de clés pour la marque ${brand}`);
-    return this.keys.filter(key => key.marque === brand).length;
-  }
-
-  async getKeyByBrandAndIndex(brand: string, index: number): Promise<CatalogueCle> {
-    this.logger.log(`getKeyByBrandAndIndex: Récupération de la clé pour la marque ${brand} et l'index ${index}`);
-    const keysByBrand = this.keys.filter(key => key.marque === brand);
-    if (index < 0 || index >= keysByBrand.length) {
-      throw new Error('Index invalide pour la marque donnée');
-    }
-    return keysByBrand[index];
-  }
-
-  async deleteKeyByName(nom: string): Promise<void> {
-    this.logger.log(`deleteKeyByName: Suppression de la clé avec le nom ${nom}`);
-    this.keys = this.keys.filter(key => key.nom !== nom);
+  // Suppression d'une clé par son nom
+  @Delete('cles/delete')
+  async deleteKeyByName(@Query('nom') nom: string): Promise<{ message: string }> {
+    this.logger.log(Requête DELETE reçue pour nom: ${nom});
+    await this.produitService.deleteKeyByName(nom);
+    return { message: Clé avec le nom "${nom}" a été supprimée avec succès. };
   }
 }
