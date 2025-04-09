@@ -55,7 +55,7 @@ export class CatalogueCle {
   @Column({ default: false })
   besoinNumeroCarte: boolean;
 
-  // Frais de dossier, toujours présent et par défaut à 0
+  // Frais de dossier, avec une valeur par défaut de 0
   @Column('decimal', { default: 0 })
   fraisDeDossier: number;
 }
