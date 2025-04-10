@@ -1,16 +1,4 @@
-// src/produit/produit.controller.ts
-import { 
-  Controller,
-  Get,
-  Query,
-  Param,
-  Put,
-  Body,
-  Post,
-  Delete,
-  Logger,
-  UseInterceptors,
-} from '@nestjs/common';
+import { Controller, Get, Query, Param, Put, Body, Post, Delete, Logger, UseInterceptors } from '@nestjs/common';
 import { ProduitService } from './produit.service';
 import { CatalogueCle } from '../entities/catalogue-cle.entity';
 import { CreateKeyDto } from './create-key.dto';
@@ -81,7 +69,6 @@ export class ProduitController {
       besoinPhoto: newKey.besoinPhoto ?? false,
       besoinNumeroCle: newKey.besoinNumeroCle ?? false,
       besoinNumeroCarte: newKey.besoinNumeroCarte ?? false,
-      // Ajout du champ requis "fraisDeDossier" avec valeur par défaut 0 si non renseigné
       fraisDeDossier: (newKey as any).fraisDeDossier ?? 0,
     }));
     this.logger.log(`Requête POST reçue pour ajouter ${keysToAdd.length} clés.`);
