@@ -1,4 +1,3 @@
-// src/produit/create-key.dto.ts
 import { IsString, IsNotEmpty, IsBoolean, IsNumber, IsOptional, IsEnum } from 'class-validator';
 
 export enum TypeReproduction {
@@ -67,7 +66,7 @@ export class CreateKeyDto {
   @IsOptional()
   besoinNumeroCarte?: boolean;
 
-  // Si le champ fraisDeDossier est requis dans l'entité, le déclarer ici éventuellement en option
+  // Champ fraisDeDossier avec valeur par défaut si non fourni
   @IsNumber()
   @IsOptional()
   fraisDeDossier?: number;
