@@ -1,3 +1,4 @@
+// produit.controller.ts
 import { 
   Controller,
   Get,
@@ -22,21 +23,21 @@ export class ProduitController {
 
   constructor(private readonly produitService: ProduitService) {}
 
-  // Récupère les clés pour une marque donnée
+  // Récupère les clés pour une marque donnée (pour le préchargement)
   @Get('cles')
   async getKeysByMarque(@Query('marque') marque: string): Promise<CatalogueCle[]> {
     this.logger.log(`Requête reçue sur /cles avec marque: ${marque}`);
     return this.produitService.getKeysByMarque(marque);
   }
 
-  // Recherche une clé par son nom exact (avec accentuation corrigée)
+  // Recherche une clé par son nom exact
   @Get('cles/by-name')
   async getKeyByName(@Query('nom') nom: string): Promise<CatalogueCle | undefined> {
     this.logger.log(`Requête reçue sur /cles/by-name avec nom: ${nom}`);
     return this.produitService.getKeyByName(nom);
   }
 
-  // Recherche et retourne la meilleure correspondance selon le nom (distance de Levenshtein)
+  // Recherche et retourne la meilleure correspondance selon le nom
   @Get('cles/best-by-name')
   async bestKeyByName(@Query('nom') nom: string): Promise<CatalogueCle> {
     this.logger.log(`Requête pour la meilleure correspondance par nom: ${nom}`);
@@ -56,25 +57,8 @@ export class ProduitController {
   // Ajout d'une nouvelle clé
   @Post('cles/add')
   async addKey(@Body() newKey: CreateKeyDto): Promise<CatalogueCle> {
-    // Ajout d'une valeur par défaut pour fraisDeDossier (0)
-    const keyToAdd: CatalogueCle = {
-      ...newKey,
-      id: undefined,
-      imageUrl: newKey.imageUrl ?? '',
-      prixSansCartePropriete: newKey.prixSansCartePropriete ?? 0,
-      referenceEbauche: newKey.referenceEbauche?.trim() || null,
-      typeReproduction: newKey.typeReproduction,
-      descriptionNumero: newKey.descriptionNumero ?? '',
-      descriptionProduit: newKey.descriptionProduit ?? '',
-      estCleAPasse: newKey.estCleAPasse ?? false,
-      prixCleAPasse: newKey.prixCleAPasse ?? null,
-      besoinPhoto: newKey.besoinPhoto ?? false,
-      besoinNumeroCle: newKey.besoinNumeroCle ?? false,
-      besoinNumeroCarte: newKey.besoinNumeroCarte ?? false,
-      fraisDeDossier: 0, // Valeur par défaut ajoutée
-    };
-    this.logger.log(`Requête POST reçue pour ajouter la clé: ${JSON.stringify(keyToAdd)}`);
-    return this.produitService.addKey(keyToAdd);
+    this.logger.log(`Requête POST reçue pour ajouter la clé: ${JSON.stringify(newKey)}`);
+    return this.produitService.addKey(newKey as CatalogueCle);
   }
 
   // Ajout en lot de plusieurs clés
@@ -83,24 +67,8 @@ export class ProduitController {
     if (!Array.isArray(newKeys)) {
       throw new Error('Le corps de la requête doit être un tableau de clés.');
     }
-    const keysToAdd: CatalogueCle[] = newKeys.map((newKey) => ({
-      ...newKey,
-      id: undefined,
-      imageUrl: newKey.imageUrl ?? '',
-      prixSansCartePropriete: newKey.prixSansCartePropriete ?? 0,
-      referenceEbauche: newKey.referenceEbauche?.trim() || null,
-      typeReproduction: newKey.typeReproduction,
-      descriptionNumero: newKey.descriptionNumero ?? '',
-      descriptionProduit: newKey.descriptionProduit ?? '',
-      estCleAPasse: newKey.estCleAPasse ?? false,
-      prixCleAPasse: newKey.prixCleAPasse ?? null,
-      besoinPhoto: newKey.besoinPhoto ?? false,
-      besoinNumeroCle: newKey.besoinNumeroCle ?? false,
-      besoinNumeroCarte: newKey.besoinNumeroCarte ?? false,
-      fraisDeDossier: 0, // Valeur par défaut ajoutée
-    }));
-    this.logger.log(`Requête POST reçue pour ajouter ${keysToAdd.length} clés.`);
-    return this.produitService.addKeys(keysToAdd);
+    this.logger.log(`Requête POST reçue pour ajouter ${newKeys.length} clés.`);
+    return this.produitService.addKeys(newKeys as CatalogueCle[]);
   }
 
   // Récupération paginée de toutes les clés
@@ -128,8 +96,6 @@ export class ProduitController {
     return this.produitService.getKeyByIndex(parseInt(index, 10));
   }
 
-  // ------------------ Nouvelles routes pour la gestion par marque ------------------
-
   // Retourne le nombre de clés pour une marque donnée
   @Get('cles/brand/:brand/count')
   async countKeysByBrand(@Param('brand') brand: string): Promise<{ count: number }> {
@@ -138,7 +104,7 @@ export class ProduitController {
     return { count };
   }
 
-  // Récupère une clé par son index pour une marque donnée (ordre décroissant par id)
+  // Récupère une clé par son index pour une marque donnée
   @Get('cles/brand/:brand/index/:index')
   async getKeyByBrandAndIndex(
     @Param('brand') brand: string,
