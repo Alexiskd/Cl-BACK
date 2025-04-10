@@ -28,7 +28,7 @@ export class ProduitService {
     return key;
   }
 
-  // Recherche flexible pour trouver la meilleure correspondance avec LIKE et normalisation
+  // Recherche flexible en utilisant LIKE et tri par distance de Levenshtein
   async findBestKeyByName(nom: string): Promise<CatalogueCle> {
     this.logger.log(`Service: Recherche de la meilleure correspondance pour le nom: ${nom}`);
     const searchValue = `%${nom.trim().toLowerCase()}%`;
@@ -40,7 +40,7 @@ export class ProduitService {
     if (candidates.length === 0) {
       throw new NotFoundException(`Aucune clé trouvée pour le nom "${nom}"`);
     }
-    
+
     const levenshteinDistance = (a: string, b: string): number => {
       const m = a.length, n = b.length;
       const dp: number[][] = Array.from({ length: m + 1 }, () => new Array(n + 1).fill(0));
