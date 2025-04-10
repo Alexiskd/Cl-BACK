@@ -28,7 +28,7 @@ export class ProduitService {
     return key;
   }
 
-  // Recherche flexible : on utilise LIKE (avec normalisation) et on trie par distance de Levenshtein
+  // Recherche flexible pour trouver la meilleure correspondance
   async findBestKeyByName(nom: string): Promise<CatalogueCle> {
     this.logger.log(`Service: Recherche de la meilleure correspondance pour le nom: ${nom}`);
     const searchValue = `%${nom.trim().toLowerCase()}%`;
@@ -41,6 +41,7 @@ export class ProduitService {
       throw new NotFoundException(`Aucune clé trouvée pour le nom "${nom}"`);
     }
 
+    // Calcul de la distance de Levenshtein pour trier les résultats
     const levenshteinDistance = (a: string, b: string): number => {
       const m = a.length, n = b.length;
       const dp: number[][] = Array.from({ length: m + 1 }, () => new Array(n + 1).fill(0));
@@ -70,14 +71,14 @@ export class ProduitService {
     const key = await this.catalogueCleRepository.findOne({ where: { nom } });
     if (!key) throw new NotFoundException(`Clé avec le nom "${nom}" introuvable`);
     Object.assign(key, updates);
-    this.logger.log(`Service: Mise à jour de la clé: ${nom}`);
+    this.logger.log(`Service: Mise à jour de la clé : ${nom}`);
     return this.catalogueCleRepository.save(key);
   }
 
   async addKey(newKey: CatalogueCle): Promise<CatalogueCle> {
     const existingKey = await this.catalogueCleRepository.findOne({ where: { nom: newKey.nom } });
     if (existingKey) throw new BadRequestException(`Une clé avec le nom "${newKey.nom}" existe déjà.`);
-    this.logger.log(`Service: Ajout de la clé: ${newKey.nom}`);
+    this.logger.log(`Service: Ajout de la clé : ${newKey.nom}`);
     return this.catalogueCleRepository.save(newKey);
   }
 
