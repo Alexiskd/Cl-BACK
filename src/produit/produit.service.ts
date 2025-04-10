@@ -15,9 +15,9 @@ export class ProduitService {
     @Inject(CACHE_MANAGER) private cacheManager: Cache,
   ) {}
 
-  // Recherche avec normalisation pour ignorer casse et accents (nom exact)
+  // Recherche exacte insensible aux accents et à la casse
   async getKeyByName(nom: string): Promise<CatalogueCle> {
-    this.logger.log(`Service: Recherche de la clé avec le nom : ${nom}`);
+    this.logger.log(`Service: Recherche de la clé avec le nom: ${nom}`);
     const key = await this.catalogueCleRepository
       .createQueryBuilder('cle')
       .where('unaccent(lower(cle.nom)) = unaccent(lower(:nom))', { nom: nom.trim() })
@@ -28,20 +28,19 @@ export class ProduitService {
     return key;
   }
 
-  // Recherche flexible pour trouver la meilleure correspondance en utilisant LIKE
+  // Recherche flexible pour trouver la meilleure correspondance avec LIKE et normalisation
   async findBestKeyByName(nom: string): Promise<CatalogueCle> {
-    this.logger.log(`Service: Recherche de la meilleure correspondance pour : ${nom}`);
+    this.logger.log(`Service: Recherche de la meilleure correspondance pour le nom: ${nom}`);
     const searchValue = `%${nom.trim().toLowerCase()}%`;
     const candidates = await this.catalogueCleRepository
       .createQueryBuilder('cle')
       .where('unaccent(lower(cle.nom)) LIKE unaccent(lower(:searchValue))', { searchValue })
       .getMany();
-      
+
     if (candidates.length === 0) {
       throw new NotFoundException(`Aucune clé trouvée pour le nom "${nom}"`);
     }
-
-    // Calcul de la distance de Levenshtein pour trier les résultats
+    
     const levenshteinDistance = (a: string, b: string): number => {
       const m = a.length, n = b.length;
       const dp: number[][] = Array.from({ length: m + 1 }, () => new Array(n + 1).fill(0));
@@ -71,14 +70,14 @@ export class ProduitService {
     const key = await this.catalogueCleRepository.findOne({ where: { nom } });
     if (!key) throw new NotFoundException(`Clé avec le nom "${nom}" introuvable`);
     Object.assign(key, updates);
-    this.logger.log(`Service: Mise à jour de la clé : ${nom}`);
+    this.logger.log(`Service: Mise à jour de la clé: ${nom}`);
     return this.catalogueCleRepository.save(key);
   }
 
   async addKey(newKey: CatalogueCle): Promise<CatalogueCle> {
     const existingKey = await this.catalogueCleRepository.findOne({ where: { nom: newKey.nom } });
     if (existingKey) throw new BadRequestException(`Une clé avec le nom "${newKey.nom}" existe déjà.`);
-    this.logger.log(`Service: Ajout de la clé : ${newKey.nom}`);
+    this.logger.log(`Service: Ajout de la clé: ${newKey.nom}`);
     return this.catalogueCleRepository.save(newKey);
   }
 
@@ -92,7 +91,7 @@ export class ProduitService {
   }
 
   async getKeysByMarque(marque: string): Promise<CatalogueCle[]> {
-    this.logger.log(`Service: Recherche des clés pour la marque : ${marque}`);
+    this.logger.log(`Service: Recherche des clés pour la marque: ${marque}`);
     if (!marque) return this.getAllKeys(10, 0);
     const cacheKey = `keysByMarque_${marque}`;
     const cached = await this.cacheManager.get<CatalogueCle[]>(cacheKey);
@@ -173,19 +172,19 @@ export class ProduitService {
   }
 
   async deleteKeyByName(nom: string): Promise<void> {
-    this.logger.log(`Service: Suppression de la clé avec le nom : ${nom}`);
+    this.logger.log(`Service: Suppression de la clé avec le nom: ${nom}`);
     const result = await this.catalogueCleRepository.delete({ nom });
     if (result.affected === 0) throw new NotFoundException(`Clé avec le nom "${nom}" introuvable`);
     this.logger.log(`Service: Clé "${nom}" supprimée avec succès`);
   }
 
   async countKeysByBrand(brand: string): Promise<number> {
-    this.logger.log(`Service: Compte des clés pour la marque : ${brand}`);
+    this.logger.log(`Service: Compte des clés pour la marque: ${brand}`);
     return this.catalogueCleRepository.count({ where: { marque: brand } });
   }
 
   async getKeyByBrandAndIndex(brand: string, index: number): Promise<CatalogueCle> {
-    this.logger.log(`Service: Récupération de la clé de la marque "${brand}" à l'index : ${index}`);
+    this.logger.log(`Service: Récupération de la clé de la marque "${brand}" à l'index: ${index}`);
     const keys = await this.catalogueCleRepository.find({
       where: { marque: brand },
       order: { id: 'DESC' },
