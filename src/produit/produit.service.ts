@@ -1,4 +1,3 @@
-// src/produit/produit.service.ts
 import { Injectable, Logger, NotFoundException, BadRequestException, Inject } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -16,49 +15,27 @@ export class ProduitService {
     @Inject(CACHE_MANAGER) private cacheManager: Cache,
   ) {}
 
-  async getKeysByMarque(marque: string): Promise<CatalogueCle[]> {
-    this.logger.log(`Service: Recherche des clés pour la marque: ${marque}`);
-    if (!marque) return this.getAllKeys(10, 0);
-    const cacheKey = `keysByMarque_${marque}`;
-    const cached = await this.cacheManager.get<CatalogueCle[]>(cacheKey);
-    if (cached) {
-      this.logger.log(`Service: Clés récupérées du cache pour marque ${marque}`);
-      return cached;
-    }
-    const keys = await this.catalogueCleRepository.find({
-      select: [
-        'id',
-        'nom',
-        'marque',
-        'prix',
-        'prixSansCartePropriete',
-        'cleAvecCartePropriete',
-        'imageUrl',
-        'referenceEbauche',
-        'typeReproduction',
-        'descriptionNumero',
-        'estCleAPasse',
-        'prixCleAPasse',
-        'besoinPhoto',
-        'besoinNumeroCle',
-        'besoinNumeroCarte',
-      ],
-      where: { marque },
-    });
-    await this.cacheManager.set(cacheKey, keys, 10);
-    return keys;
-  }
-
-  async getKeyByName(nom: string): Promise<CatalogueCle | undefined> {
+  // Recherche insensible aux accents et à la casse
+  async getKeyByName(nom: string): Promise<CatalogueCle> {
     this.logger.log(`Service: Recherche de la clé avec le nom: ${nom}`);
-    return this.catalogueCleRepository.findOne({ where: { nom } });
+    const key = await this.catalogueCleRepository
+      .createQueryBuilder('cle')
+      .where('unaccent(lower(cle.nom)) = unaccent(lower(:nom))', { nom: nom.trim() })
+      .getOne();
+    if (!key) {
+      throw new NotFoundException('Produit introuvable.');
+    }
+    return key;
   }
 
+  // Recherche avec un critère flexible en utilisant LIKE pour trouver la meilleure correspondance
   async findBestKeyByName(nom: string): Promise<CatalogueCle> {
     this.logger.log(`Service: Recherche de la meilleure correspondance pour le nom "${nom}"`);
+    // Ici nous construisons la valeur de recherche avec des wildcards (%) 
+    const searchValue = `%${nom.trim().toLowerCase()}%`;
     const candidates = await this.catalogueCleRepository
       .createQueryBuilder('cle')
-      .where('cle.nom ILIKE :nom', { nom: `%${nom.trim()}%` })
+      .where('unaccent(lower(cle.nom)) LIKE unaccent(lower(:searchValue))', { searchValue })
       .getMany();
     if (candidates.length === 0) {
       throw new NotFoundException(`Aucune clé trouvée pour le nom "${nom}"`);
