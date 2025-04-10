@@ -26,9 +26,26 @@ export class ProduitService {
       return cached;
     }
     const keys = await this.catalogueCleRepository.find({
+      select: [
+        'id',
+        'nom',
+        'marque',
+        'prix',
+        'prixSansCartePropriete',
+        'cleAvecCartePropriete',
+        'imageUrl',
+        'referenceEbauche',
+        'typeReproduction',
+        'descriptionNumero',
+        'estCleAPasse',
+        'prixCleAPasse',
+        'besoinPhoto',
+        'besoinNumeroCle',
+        'besoinNumeroCarte',
+      ],
       where: { marque },
     });
-    await this.cacheManager.set(cacheKey, keys, 10);  // TTL en nombre de secondes
+    await this.cacheManager.set(cacheKey, keys, 10);
     return keys;
   }
 
@@ -46,8 +63,6 @@ export class ProduitService {
     if (candidates.length === 0) {
       throw new NotFoundException(`Aucune clé trouvée pour le nom "${nom}"`);
     }
-
-    // Fonction utilitaire pour calculer la distance de Levenshtein
     const levenshteinDistance = (a: string, b: string): number => {
       const m = a.length, n = b.length;
       const dp: number[][] = Array.from({ length: m + 1 }, () => new Array(n + 1).fill(0));
@@ -70,7 +85,6 @@ export class ProduitService {
       levenshteinDistance(nom.trim().toLowerCase(), a.nom.trim().toLowerCase()) -
       levenshteinDistance(nom.trim().toLowerCase(), b.nom.trim().toLowerCase())
     );
-
     return candidates[0];
   }
 
@@ -107,11 +121,28 @@ export class ProduitService {
       return cached;
     }
     const keys = await this.catalogueCleRepository.find({
+      select: [
+        'id',
+        'nom',
+        'marque',
+        'prix',
+        'prixSansCartePropriete',
+        'cleAvecCartePropriete',
+        'imageUrl',
+        'referenceEbauche',
+        'typeReproduction',
+        'descriptionNumero',
+        'estCleAPasse',
+        'prixCleAPasse',
+        'besoinPhoto',
+        'besoinNumeroCle',
+        'besoinNumeroCarte',
+      ],
       take: limit,
       skip: skip,
       order: { id: 'DESC' },
     });
-    await this.cacheManager.set(cacheKey, keys, 10);  // On passe 10 secondes pour le TTL
+    await this.cacheManager.set(cacheKey, keys, 10);
     return keys;
   }
 
