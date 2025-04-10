@@ -15,7 +15,7 @@ export class ProduitService {
     @Inject(CACHE_MANAGER) private cacheManager: Cache,
   ) {}
 
-  // Recherche insensible aux accents et à la casse
+  // Recherche insensible aux accents et à la casse pour un nom exact
   async getKeyByName(nom: string): Promise<CatalogueCle> {
     this.logger.log(`Service: Recherche de la clé avec le nom: ${nom}`);
     const key = await this.catalogueCleRepository
@@ -28,10 +28,9 @@ export class ProduitService {
     return key;
   }
 
-  // Recherche avec un critère flexible en utilisant LIKE pour trouver la meilleure correspondance
+  // Recherche flexible (meilleure correspondance) en utilisant LIKE et normalisation
   async findBestKeyByName(nom: string): Promise<CatalogueCle> {
     this.logger.log(`Service: Recherche de la meilleure correspondance pour le nom "${nom}"`);
-    // Ici nous construisons la valeur de recherche avec des wildcards (%) 
     const searchValue = `%${nom.trim().toLowerCase()}%`;
     const candidates = await this.catalogueCleRepository
       .createQueryBuilder('cle')
@@ -40,6 +39,7 @@ export class ProduitService {
     if (candidates.length === 0) {
       throw new NotFoundException(`Aucune clé trouvée pour le nom "${nom}"`);
     }
+
     const levenshteinDistance = (a: string, b: string): number => {
       const m = a.length, n = b.length;
       const dp: number[][] = Array.from({ length: m + 1 }, () => new Array(n + 1).fill(0));
@@ -48,11 +48,7 @@ export class ProduitService {
       for (let i = 1; i <= m; i++) {
         for (let j = 1; j <= n; j++) {
           const cost = a[i - 1] === b[j - 1] ? 0 : 1;
-          dp[i][j] = Math.min(
-            dp[i - 1][j] + 1,
-            dp[i][j - 1] + 1,
-            dp[i - 1][j - 1] + cost
-          );
+          dp[i][j] = Math.min(dp[i - 1][j] + 1, dp[i][j - 1] + 1, dp[i - 1][j - 1] + cost);
         }
       }
       return dp[m][n];
@@ -87,6 +83,39 @@ export class ProduitService {
     }
     this.logger.log(`Service: Ajout de ${newKeys.length} clés en batch.`);
     return this.catalogueCleRepository.save(newKeys);
+  }
+
+  async getKeysByMarque(marque: string): Promise<CatalogueCle[]> {
+    this.logger.log(`Service: Recherche des clés pour la marque: ${marque}`);
+    if (!marque) return this.getAllKeys(10, 0);
+    const cacheKey = `keysByMarque_${marque}`;
+    const cached = await this.cacheManager.get<CatalogueCle[]>(cacheKey);
+    if (cached) {
+      this.logger.log(`Service: Clés récupérées du cache pour marque ${marque}`);
+      return cached;
+    }
+    const keys = await this.catalogueCleRepository.find({
+      select: [
+        'id',
+        'nom',
+        'marque',
+        'prix',
+        'prixSansCartePropriete',
+        'cleAvecCartePropriete',
+        'imageUrl',
+        'referenceEbauche',
+        'typeReproduction',
+        'descriptionNumero',
+        'estCleAPasse',
+        'prixCleAPasse',
+        'besoinPhoto',
+        'besoinNumeroCle',
+        'besoinNumeroCarte',
+      ],
+      where: { marque },
+    });
+    await this.cacheManager.set(cacheKey, keys, 10);
+    return keys;
   }
 
   async getAllKeys(limit: number, skip: number): Promise<CatalogueCle[]> {
