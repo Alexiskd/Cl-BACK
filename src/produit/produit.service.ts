@@ -1,4 +1,4 @@
-// produit.service.ts
+// src/produit/produit.service.ts
 import { Injectable, Logger, NotFoundException, BadRequestException, Inject } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -28,7 +28,7 @@ export class ProduitService {
     const keys = await this.catalogueCleRepository.find({
       where: { marque },
     });
-    await this.cacheManager.set(cacheKey, keys, { ttl: 10 });
+    await this.cacheManager.set(cacheKey, keys, 10);  // TTL en nombre de secondes
     return keys;
   }
 
@@ -111,7 +111,7 @@ export class ProduitService {
       skip: skip,
       order: { id: 'DESC' },
     });
-    await this.cacheManager.set(cacheKey, keys, { ttl: 10 });
+    await this.cacheManager.set(cacheKey, keys, 10);  // On passe 10 secondes pour le TTL
     return keys;
   }
 
