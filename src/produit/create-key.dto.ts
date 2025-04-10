@@ -53,7 +53,6 @@ export class CreateKeyDto {
   @IsOptional()
   prixCleAPasse?: number;
 
-  // Nouveaux champs
   @IsBoolean()
   @IsOptional()
   besoinPhoto?: boolean;
@@ -66,7 +65,6 @@ export class CreateKeyDto {
   @IsOptional()
   besoinNumeroCarte?: boolean;
 
-  // Champ fraisDeDossier avec valeur par défaut si non fourni
   @IsNumber()
   @IsOptional()
   fraisDeDossier?: number;
