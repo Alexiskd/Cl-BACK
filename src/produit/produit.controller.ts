@@ -95,13 +95,4 @@ export class ProduitController {
   @Get('cles/brand/:brand/index/:index')
   async getKeyByBrandAndIndex(@Param('brand') brand: string, @Param('index') index: string): Promise<CatalogueCle> {
     this.logger.log(`Requête GET sur /cles/brand/${brand}/index/${index}`);
-    return this.produitService.getKeyByBrandAndIndex(brand, parseInt(index, 10));
-  }
-
-  @Delete('cles/delete')
-  async deleteKeyByName(@Query('nom') nom: string): Promise<{ message: string }> {
-    this.logger.log(`Requête DELETE reçue pour nom: ${nom}`);
-    await this.produitService.deleteKeyByName(nom);
-    return { message: `Clé avec le nom "${nom}" a été supprimée avec succès.` };
-  }
-}
+    return this.pro
