@@ -9,8 +9,8 @@ import { CatalogueCle } from '../entities/catalogue-cle.entity';
 @Module({
   imports: [
     CacheModule.register({
-      ttl: 5,  // TTL par défaut en secondes
-      max: 100, // Nombre maximum d'éléments en cache
+      ttl: 5,
+      max: 100,
     }),
     TypeOrmModule.forFeature([CatalogueCle]),
   ],
