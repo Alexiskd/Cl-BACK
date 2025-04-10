@@ -1,4 +1,4 @@
-// create-key.dto.ts
+// src/produit/create-key.dto.ts
 import { IsString, IsNotEmpty, IsBoolean, IsNumber, IsOptional, IsEnum } from 'class-validator';
 
 export enum TypeReproduction {
@@ -42,7 +42,6 @@ export class CreateKeyDto {
   @IsOptional()
   descriptionNumero?: string;
 
-  // Description générale du produit (optionnelle)
   @IsString()
   @IsOptional()
   descriptionProduit?: string;
@@ -55,17 +54,14 @@ export class CreateKeyDto {
   @IsOptional()
   prixCleAPasse?: number;
 
-  // Nouveau champ indiquant si des photos sont requises
   @IsBoolean()
   @IsOptional()
   besoinPhoto?: boolean;
 
-  // Nouveau champ indiquant si le numéro de clé est requis
   @IsBoolean()
   @IsOptional()
   besoinNumeroCle?: boolean;
 
-  // Nouveau champ indiquant si le numéro de carte est requis
   @IsBoolean()
   @IsOptional()
   besoinNumeroCarte?: boolean;
