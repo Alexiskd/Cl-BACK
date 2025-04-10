@@ -54,6 +54,7 @@ export class CreateKeyDto {
   @IsOptional()
   prixCleAPasse?: number;
 
+  // Nouveaux champs
   @IsBoolean()
   @IsOptional()
   besoinPhoto?: boolean;
@@ -65,4 +66,9 @@ export class CreateKeyDto {
   @IsBoolean()
   @IsOptional()
   besoinNumeroCarte?: boolean;
+
+  // Si le champ fraisDeDossier est requis dans l'entité, le déclarer ici éventuellement en option
+  @IsNumber()
+  @IsOptional()
+  fraisDeDossier?: number;
 }
