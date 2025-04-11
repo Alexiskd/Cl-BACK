@@ -1,4 +1,4 @@
-import { Controller, Get, Query, Param, Put, Body, Post, Delete, Logger, UseInterceptors } from '@nestjs/common';
+import { Controller, Get, Query, Param, Put, Body, Post, Logger, UseInterceptors } from '@nestjs/common';
 import { ProduitService } from './produit.service';
 import { CatalogueCle } from '../entities/catalogue-cle.entity';
 import { CreateKeyDto } from './create-key.dto';
@@ -95,4 +95,6 @@ export class ProduitController {
   @Get('cles/brand/:brand/index/:index')
   async getKeyByBrandAndIndex(@Param('brand') brand: string, @Param('index') index: string): Promise<CatalogueCle> {
     this.logger.log(`Requête GET sur /cles/brand/${brand}/index/${index}`);
-    return this.pro
+    return this.produitService.getKeyByBrandAndIndex(brand, parseInt(index, 10));
+  }
+}
