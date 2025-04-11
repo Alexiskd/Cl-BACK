@@ -28,7 +28,7 @@ export class ProduitService {
     return key;
   }
 
-  // Recherche flexible pour trouver la meilleure correspondance
+  // Recherche flexible pour trouver le produit le plus semblable
   async findBestKeyByName(nom: string): Promise<CatalogueCle> {
     this.logger.log(`Service: Recherche de la meilleure correspondance pour le nom: ${nom}`);
     const searchValue = `%${nom.trim().toLowerCase()}%`;
@@ -41,7 +41,7 @@ export class ProduitService {
       throw new NotFoundException(`Aucune clé trouvée pour le nom "${nom}"`);
     }
 
-    // Calcul de la distance de Levenshtein pour trier les résultats
+    // Fonction de calcul de la distance de Levenshtein
     const levenshteinDistance = (a: string, b: string): number => {
       const m = a.length, n = b.length;
       const dp: number[][] = Array.from({ length: m + 1 }, () => new Array(n + 1).fill(0));
@@ -53,7 +53,7 @@ export class ProduitService {
           dp[i][j] = Math.min(
             dp[i - 1][j] + 1,
             dp[i][j - 1] + 1,
-            dp[i - 1][j - 1] + cost
+            dp[i - 1][j - 1] + cost,
           );
         }
       }
