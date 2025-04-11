@@ -28,13 +28,23 @@ export class ProduitService {
     return key;
   }
 
-  // Recherche flexible pour trouver le produit le plus semblable
+  // Recherche flexible pour trouver le produit le plus similaire
   async findBestKeyByName(nom: string): Promise<CatalogueCle> {
     this.logger.log(`Service: Recherche de la meilleure correspondance pour le nom: ${nom}`);
+
+    // Fonction de normalisation pour la comparaison : conserver uniquement les caractères alphabétiques en minuscule
+    const normalizeForComparison = (str: string): string => {
+      // Remplace tous les caractères qui ne sont pas des lettres (a-z) par une chaîne vide.
+      return str.toLowerCase().replace(/[^a-z]/g, '');
+    };
+
+    const targetNormalized = normalizeForComparison(nom.trim());
+
+    // Rechercher des candidats en utilisant une requête large (LIKE)
     const searchValue = `%${nom.trim().toLowerCase()}%`;
-    const candidates = await this.catalogueCleRepository
+    let candidates = await this.catalogueCleRepository
       .createQueryBuilder('cle')
-      .where('unaccent(lower(cle.nom)) LIKE unaccent(lower(:searchValue))', { searchValue })
+      .where('unaccent(lower(cle.nom)) LIKE unaccent(:searchValue)', { searchValue })
       .getMany();
 
     if (candidates.length === 0) {
@@ -60,10 +70,13 @@ export class ProduitService {
       return dp[m][n];
     };
 
+    // Trier les candidats selon leur similarité avec la chaîne cible
     candidates.sort((a, b) =>
-      levenshteinDistance(nom.trim().toLowerCase(), a.nom.trim().toLowerCase()) -
-      levenshteinDistance(nom.trim().toLowerCase(), b.nom.trim().toLowerCase())
+      levenshteinDistance(normalizeForComparison(a.nom), targetNormalized) -
+      levenshteinDistance(normalizeForComparison(b.nom), targetNormalized)
     );
+
+    // Renvoyer le candidat le plus proche
     return candidates[0];
   }
 
@@ -196,3 +209,4 @@ export class ProduitService {
     return keys[0];
   }
 }
+
