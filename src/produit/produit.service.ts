@@ -15,7 +15,7 @@ export class ProduitService {
     @Inject(CACHE_MANAGER) private cacheManager: Cache,
   ) {}
 
-  // Recherche exacte, insensible aux accents et à la casse
+  // Recherche exacte insensible aux accents et à la casse
   async getKeyByName(nom: string): Promise<CatalogueCle> {
     this.logger.log(`Service: Recherche de la clé avec le nom: ${nom}`);
     const key = await this.catalogueCleRepository
@@ -28,7 +28,7 @@ export class ProduitService {
     return key;
   }
 
-  // Recherche flexible pour la meilleure correspondance
+  // Recherche flexible pour trouver la meilleure correspondance
   async findBestKeyByName(nom: string): Promise<CatalogueCle> {
     this.logger.log(`Service: Recherche de la meilleure correspondance pour le nom: ${nom}`);
     const searchValue = `%${nom.trim().toLowerCase()}%`;
@@ -41,7 +41,7 @@ export class ProduitService {
       throw new NotFoundException(`Aucune clé trouvée pour le nom "${nom}"`);
     }
 
-    // Tri par distance de Levenshtein (pour la meilleure correspondance)
+    // Calcul de la distance de Levenshtein pour trier les résultats
     const levenshteinDistance = (a: string, b: string): number => {
       const m = a.length, n = b.length;
       const dp: number[][] = Array.from({ length: m + 1 }, () => new Array(n + 1).fill(0));
