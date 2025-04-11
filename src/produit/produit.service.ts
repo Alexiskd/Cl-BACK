@@ -181,18 +181,4 @@ export class ProduitService {
 
   async countKeysByBrand(brand: string): Promise<number> {
     this.logger.log(`Service: Compte des clés pour la marque: ${brand}`);
-    return this.catalogueCleRepository.count({ where: { marque: brand } });
-  }
-
-  async getKeyByBrandAndIndex(brand: string, index: number): Promise<CatalogueCle> {
-    this.logger.log(`Service: Récupération de la clé de la marque "${brand}" à l'index: ${index}`);
-    const keys = await this.catalogueCleRepository.find({
-      where: { marque: brand },
-      order: { id: 'DESC' },
-      skip: index,
-      take: 1,
-    });
-    if (keys.length === 0) throw new NotFoundException(`Aucune clé trouvée pour la marque "${brand}" à l'index ${index}`);
-    return keys[0];
-  }
-}
+    return this.catalogueCleRepository.count({ where
