@@ -15,7 +15,7 @@ export class ProduitService {
     @Inject(CACHE_MANAGER) private cacheManager: Cache,
   ) {}
 
-  // Recherche exacte insensible aux accents et à la casse (utilise la fonction de normalisation côté SQL avec ILIKE)
+  // Recherche exacte insensible à la casse
   async getKeyByName(nom: string): Promise<CatalogueCle> {
     this.logger.log(`Service: Recherche de la clé avec le nom: ${nom}`);
     const key = await this.catalogueCleRepository
@@ -31,9 +31,7 @@ export class ProduitService {
   // Recherche flexible pour trouver le produit le plus similaire sans utiliser "unaccent"
   async findBestKeyByName(nom: string): Promise<CatalogueCle> {
     this.logger.log(`Service: Recherche de la meilleure correspondance pour le nom: ${nom}`);
-    // Définition d'une valeur de recherche en insensible à la casse
     const searchValue = `%${nom.trim().toLowerCase()}%`;
-    // Utilisation de ILIKE pour récupérer des candidats
     let candidates = await this.catalogueCleRepository
       .createQueryBuilder('cle')
       .where('lower(cle.nom) ILIKE :searchValue', { searchValue })
@@ -43,14 +41,14 @@ export class ProduitService {
       throw new NotFoundException(`Aucune clé trouvée pour le nom "${nom}"`);
     }
 
-    // Fonction de normalisation en supprimant les caractères non alphabétiques
+    // Normalisation pour comparer sans accents
     const normalizeForComparison = (str: string): string => {
-      return str.toLowerCase().replace(/[^a-z]/g, '');
+      return str.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
     };
 
     const targetNormalized = normalizeForComparison(nom.trim());
 
-    // Fonction de calcul de la distance de Levenshtein
+    // Calcul de la distance de Levenshtein
     const levenshteinDistance = (a: string, b: string): number => {
       const m = a.length, n = b.length;
       const dp: number[][] = Array.from({ length: m + 1 }, () => new Array(n + 1).fill(0));
@@ -69,12 +67,10 @@ export class ProduitService {
       return dp[m][n];
     };
 
-    // Tri des candidats par similarité avec le nom recherché
     candidates.sort((a, b) =>
       levenshteinDistance(normalizeForComparison(a.nom), targetNormalized) -
       levenshteinDistance(normalizeForComparison(b.nom), targetNormalized)
     );
-
     this.logger.log(`Meilleure correspondance trouvée : ${candidates[0].nom}`);
     return candidates[0];
   }
