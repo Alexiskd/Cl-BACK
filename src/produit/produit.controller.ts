@@ -41,14 +41,7 @@ export class ProduitController {
     return key;
   }
 
-  // Recherche la meilleure correspondance par nom (distance de Levenshtein)
-  @Get('cles/best-by-name')
-  async bestKeyByName(@Query('nom') nom: string): Promise<CatalogueCle> {
-    this.logger.log(`Requête pour la meilleure correspondance par nom: ${nom}`);
-    return this.produitService.findClosestKey(nom);
-  }
-
-  // Nouvelle route : Recherche la clé qui ressemble le plus au nom fourni
+  // Recherche la clé qui ressemble le plus au nom fourni (utilisant la distance de Levenshtein)
   @Get('cles/closest')
   async findClosestKey(@Query('nom') nom: string): Promise<CatalogueCle> {
     this.logger.log(`Requête pour trouver la clé la plus proche pour le nom: ${nom}`);
