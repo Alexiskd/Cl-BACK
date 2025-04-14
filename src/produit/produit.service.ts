@@ -31,24 +31,25 @@ export class ProduitService {
   // Recherche flexible pour trouver le produit le plus similaire sans utiliser "unaccent"
   async findBestKeyByName(nom: string): Promise<CatalogueCle> {
     this.logger.log(`Service: Recherche de la meilleure correspondance pour le nom: ${nom}`);
-    const searchValue = `%${nom.trim().toLowerCase()}%`;
-    let candidates = await this.catalogueCleRepository
-      .createQueryBuilder('cle')
-      .where('lower(cle.nom) ILIKE :searchValue', { searchValue })
-      .getMany();
-
-    if (!candidates || candidates.length === 0) {
-      throw new NotFoundException(`Aucune clé trouvée pour le nom "${nom}"`);
-    }
-
-    // Normalisation pour comparer sans accents
+    
+    // Normalisation côté serveur pour la comparaison
     const normalizeForComparison = (str: string): string => {
       return str.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
     };
 
     const targetNormalized = normalizeForComparison(nom.trim());
+    
+    // Récupérer l'ensemble des clés (vous pouvez filtrer par marque ici si nécessaire)
+    const allKeys = await this.catalogueCleRepository.find();
+    const candidates = allKeys.filter(key => 
+      normalizeForComparison(key.nom).includes(targetNormalized)
+    );
 
-    // Calcul de la distance de Levenshtein
+    if (!candidates || candidates.length === 0) {
+      throw new NotFoundException(`Aucune clé trouvée pour le nom "${nom}"`);
+    }
+
+    // Calcul de la distance de Levenshtein pour sélectionner la meilleure correspondance
     const levenshteinDistance = (a: string, b: string): number => {
       const m = a.length, n = b.length;
       const dp: number[][] = Array.from({ length: m + 1 }, () => new Array(n + 1).fill(0));
@@ -71,6 +72,7 @@ export class ProduitService {
       levenshteinDistance(normalizeForComparison(a.nom), targetNormalized) -
       levenshteinDistance(normalizeForComparison(b.nom), targetNormalized)
     );
+
     this.logger.log(`Meilleure correspondance trouvée : ${candidates[0].nom}`);
     return candidates[0];
   }
