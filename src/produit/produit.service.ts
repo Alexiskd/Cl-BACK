@@ -36,12 +36,11 @@ export class ProduitService {
         'referenceEbauche',
         'typeReproduction',
         'descriptionNumero',
-        'descriptionProduit', // Inclus pour afficher la description générale du produit
         'estCleAPasse',
         'prixCleAPasse',
         'besoinPhoto',
         'besoinNumeroCle',
-        'besoinNumeroCarte'
+        'besoinNumeroCarte',
       ],
       where: { marque },
     });
@@ -63,6 +62,7 @@ export class ProduitService {
     if (candidates.length === 0) {
       throw new NotFoundException(`Aucune clé trouvée pour le nom "${nom}"`);
     }
+
     const levenshteinDistance = (a: string, b: string): number => {
       const m = a.length, n = b.length;
       const dp: number[][] = Array.from({ length: m + 1 }, () => new Array(n + 1).fill(0));
@@ -85,6 +85,7 @@ export class ProduitService {
       levenshteinDistance(nom.trim().toLowerCase(), a.nom.trim().toLowerCase()) -
       levenshteinDistance(nom.trim().toLowerCase(), b.nom.trim().toLowerCase())
     );
+
     return candidates[0];
   }
 
@@ -132,12 +133,11 @@ export class ProduitService {
         'referenceEbauche',
         'typeReproduction',
         'descriptionNumero',
-        'descriptionProduit',
         'estCleAPasse',
         'prixCleAPasse',
         'besoinPhoto',
         'besoinNumeroCle',
-        'besoinNumeroCarte'
+        'besoinNumeroCarte',
       ],
       take: limit,
       skip: skip,
