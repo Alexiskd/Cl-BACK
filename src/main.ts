@@ -9,11 +9,11 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   const logger = new Logger('Bootstrap');
 
-  // Limite la taille des payloads
+  // Limiter la taille des requêtes
   app.use(json({ limit: '10mb' }));
   app.use(urlencoded({ limit: '10mb', extended: true }));
 
-  // Définir les origines autorisées pour CORS (sans slash final pour éviter les incohérences)
+  // Liste des origines autorisées
   const allowedOrigins = [
     process.env.CORS_ORIGIN || 'http://localhost:5173',
     'https://frontendcleservice.onrender.com',
@@ -26,7 +26,6 @@ async function bootstrap() {
     'http://localhost:4173',
   ];
 
-  // Activer CORS en vérifiant l'origine
   app.enableCors({
     origin: (origin, callback) => {
       // Autoriser les requêtes sans origine (ex. Postman)
@@ -42,7 +41,7 @@ async function bootstrap() {
     credentials: true,
   });
 
-  // Validation globale
+  // Validation globale et intercepteur de logging
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,
@@ -50,11 +49,9 @@ async function bootstrap() {
       transform: true,
     }),
   );
-
-  // Ajout d'un intercepteur global pour le logging
   app.useGlobalInterceptors(new LoggingInterceptor());
 
-  // Configuration de Swagger
+  // Swagger (optionnel)
   const config = new DocumentBuilder()
     .setTitle('API Stancer')
     .setDescription('API pour générer des pages de paiement avec Stancer')
@@ -63,10 +60,8 @@ async function bootstrap() {
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('api', app, document);
 
-  // Démarrage de l'application
   const port = process.env.PORT || 3000;
   await app.listen(port, '0.0.0.0');
   logger.log(`Application running on port ${port}`);
 }
-
 bootstrap();
