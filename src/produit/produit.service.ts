@@ -65,6 +65,7 @@ export class ProduitService {
       throw new NotFoundException(`Aucune clé trouvée pour le nom "${nom}"`);
     }
 
+    // Fonction de calcul de la distance de Levenshtein
     const levenshteinDistance = (a: string, b: string): number => {
       const m = a.length, n = b.length;
       const dp: number[][] = Array.from({ length: m + 1 }, () => new Array(n + 1).fill(0));
