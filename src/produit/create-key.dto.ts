@@ -54,7 +54,6 @@ export class CreateKeyDto {
   @IsOptional()
   prixCleAPasse?: number = 0;
 
-  // ===================== Nouveaux champs =====================
   // Indique si des photos sont requises
   @IsBoolean()
   @IsOptional()
