@@ -23,6 +23,7 @@ export class ProduitController {
     return this.produitService.getKeyByName(nom);
   }
 
+  // Ici, nous utilisons la nouvelle méthode pour rechercher la clé la plus similaire sans "unaccent"
   @Get('cles/best-by-name')
   async bestKeyByName(@Query('nom') nom: string): Promise<CatalogueCle> {
     this.logger.log(`Requête pour la meilleure correspondance par nom: ${nom}`);
