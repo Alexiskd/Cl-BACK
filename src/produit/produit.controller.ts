@@ -70,7 +70,6 @@ export class ProduitController {
       besoinPhoto: newKey.besoinPhoto ?? false,
       besoinNumeroCle: newKey.besoinNumeroCle ?? false,
       besoinNumeroCarte: newKey.besoinNumeroCarte ?? false,
-      fraisDeDossier: newKey.fraisDeDossier ?? 0,
     };
     this.logger.log(`Requête POST reçue pour ajouter la clé: ${JSON.stringify(keyToAdd)}`);
     return this.produitService.addKey(keyToAdd);
@@ -96,7 +95,6 @@ export class ProduitController {
       besoinPhoto: newKey.besoinPhoto ?? false,
       besoinNumeroCle: newKey.besoinNumeroCle ?? false,
       besoinNumeroCarte: newKey.besoinNumeroCarte ?? false,
-      fraisDeDossier: newKey.fraisDeDossier ?? 0,
     }));
     this.logger.log(`Requête POST reçue pour ajouter ${keysToAdd.length} clés.`);
     return this.produitService.addKeys(keysToAdd);
@@ -127,6 +125,8 @@ export class ProduitController {
     return this.produitService.getKeyByIndex(parseInt(index, 10));
   }
 
+  // ------------------ Nouvelles routes pour la gestion par marque ------------------
+
   // Retourne le nombre de clés pour une marque donnée
   @Get('cles/brand/:brand/count')
   async countKeysByBrand(@Param('brand') brand: string): Promise<{ count: number }> {
@@ -135,7 +135,7 @@ export class ProduitController {
     return { count };
   }
 
-  // Récupère une clé par son index pour une marque donnée
+  // Récupère une clé par son index pour une marque donnée (ordre décroissant par id)
   @Get('cles/brand/:brand/index/:index')
   async getKeyByBrandAndIndex(
     @Param('brand') brand: string,
