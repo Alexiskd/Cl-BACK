@@ -1,3 +1,4 @@
+// src/produit/produit.controller.ts
 import { 
   Controller,
   Get,
@@ -127,8 +128,6 @@ export class ProduitController {
     return this.produitService.getKeyByIndex(parseInt(index, 10));
   }
 
-  // ------------------ Nouvelles routes pour la gestion par marque ------------------
-
   // Retourne le nombre de clés pour une marque donnée
   @Get('cles/brand/:brand/count')
   async countKeysByBrand(@Param('brand') brand: string): Promise<{ count: number }> {
@@ -137,7 +136,7 @@ export class ProduitController {
     return { count };
   }
 
-  // Récupère une clé par son index pour une marque donnée (ordre décroissant par id)
+  // Récupère une clé par son index pour une marque donnée
   @Get('cles/brand/:brand/index/:index')
   async getKeyByBrandAndIndex(
     @Param('brand') brand: string,
