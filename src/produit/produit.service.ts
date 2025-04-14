@@ -36,7 +36,7 @@ export class ProduitService {
         'referenceEbauche',
         'typeReproduction',
         'descriptionNumero',
-        'descriptionProduit', // Inclus pour afficher la description générale du produit
+        'descriptionProduit',
         'estCleAPasse',
         'prixCleAPasse',
         'besoinPhoto',
@@ -54,15 +54,17 @@ export class ProduitService {
     return this.catalogueCleRepository.findOne({ where: { nom } });
   }
 
-  async findBestKeyByName(nom: string): Promise<CatalogueCle> {
-    this.logger.log(`Service: Recherche de la meilleure correspondance pour le nom "${nom}"`);
+  async findClosestKey(nom: string): Promise<CatalogueCle> {
+    this.logger.log(`Service: Recherche de la clé la plus proche pour le nom "${nom}"`);
     const candidates = await this.catalogueCleRepository
       .createQueryBuilder('cle')
       .where('cle.nom ILIKE :nom', { nom: `%${nom.trim()}%` })
       .getMany();
+
     if (candidates.length === 0) {
       throw new NotFoundException(`Aucune clé trouvée pour le nom "${nom}"`);
     }
+
     const levenshteinDistance = (a: string, b: string): number => {
       const m = a.length, n = b.length;
       const dp: number[][] = Array.from({ length: m + 1 }, () => new Array(n + 1).fill(0));
@@ -85,6 +87,7 @@ export class ProduitService {
       levenshteinDistance(nom.trim().toLowerCase(), a.nom.trim().toLowerCase()) -
       levenshteinDistance(nom.trim().toLowerCase(), b.nom.trim().toLowerCase())
     );
+
     return candidates[0];
   }
 
