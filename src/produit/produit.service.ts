@@ -1,4 +1,3 @@
-// src/produit/produit.service.ts
 import { Injectable, Logger, NotFoundException, BadRequestException, Inject } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -37,11 +36,13 @@ export class ProduitService {
         'referenceEbauche',
         'typeReproduction',
         'descriptionNumero',
+        'descriptionProduit',   // Champ ajouté pour afficher la description générale du produit
         'estCleAPasse',
         'prixCleAPasse',
         'besoinPhoto',
         'besoinNumeroCle',
         'besoinNumeroCarte',
+        'fraisDeDossier',       // Champ ajouté pour afficher les frais de dossier
       ],
       where: { marque },
     });
@@ -132,11 +133,13 @@ export class ProduitService {
         'referenceEbauche',
         'typeReproduction',
         'descriptionNumero',
+        'descriptionProduit',   // Inclus pour afficher la description générale du produit
         'estCleAPasse',
         'prixCleAPasse',
         'besoinPhoto',
         'besoinNumeroCle',
         'besoinNumeroCarte',
+        'fraisDeDossier',       // Inclus pour afficher les frais de dossier
       ],
       take: limit,
       skip: skip,
