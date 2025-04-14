@@ -23,15 +23,15 @@ export class CreateKeyDto {
 
   @IsNumber()
   @IsOptional()
-  prixSansCartePropriete?: number;
+  prixSansCartePropriete?: number = 0;
 
   @IsString()
   @IsOptional()
-  imageUrl?: string;
+  imageUrl?: string = '';
 
   @IsString()
   @IsOptional()
-  referenceEbauche?: string;
+  referenceEbauche?: string = '';
 
   @IsEnum(TypeReproduction)
   @IsNotEmpty()
@@ -39,34 +39,34 @@ export class CreateKeyDto {
 
   @IsString()
   @IsOptional()
-  descriptionNumero?: string;
+  descriptionNumero?: string = '';
 
   // Nouveau champ : description générale du produit
   @IsString()
   @IsOptional()
-  descriptionProduit?: string;
+  descriptionProduit?: string = '';
 
   @IsBoolean()
   @IsOptional()
-  estCleAPasse?: boolean;
+  estCleAPasse?: boolean = false;
 
   @IsNumber()
   @IsOptional()
-  prixCleAPasse?: number;
+  prixCleAPasse?: number = 0;
 
   // ===================== Nouveaux champs =====================
   // Indique si des photos sont requises
   @IsBoolean()
   @IsOptional()
-  besoinPhoto?: boolean;
+  besoinPhoto?: boolean = false;
 
   // Indique si le numéro de clé est requis
   @IsBoolean()
   @IsOptional()
-  besoinNumeroCle?: boolean;
+  besoinNumeroCle?: boolean = false;
 
   // Indique si le numéro de carte est requis
   @IsBoolean()
   @IsOptional()
-  besoinNumeroCarte?: boolean;
+  besoinNumeroCarte?: boolean = false;
 }
