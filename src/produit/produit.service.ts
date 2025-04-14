@@ -1,3 +1,4 @@
+// src/produit/produit.service.ts
 import { Injectable, Logger, NotFoundException, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -55,7 +56,6 @@ export class ProduitService {
 
   async findBestKeyByName(nom: string): Promise<CatalogueCle> {
     this.logger.log(`Service: Recherche de la meilleure correspondance pour le nom "${nom}"`);
-    // Utilisation d'une requête ILIKE pour récupérer des candidats
     const candidates = await this.catalogueCleRepository
       .createQueryBuilder('cle')
       .where('cle.nom ILIKE :nom', { nom: `%${nom.trim()}%` })
@@ -63,7 +63,6 @@ export class ProduitService {
     if (candidates.length === 0) {
       throw new NotFoundException(`Aucune clé trouvée pour le nom "${nom}"`);
     }
-    // Calcul de la distance de Levenshtein
     const levenshteinDistance = (a: string, b: string): number => {
       const m = a.length, n = b.length;
       const dp: number[][] = Array.from({ length: m + 1 }, () => new Array(n + 1).fill(0));
@@ -81,6 +80,7 @@ export class ProduitService {
       }
       return dp[m][n];
     };
+
     candidates.sort((a, b) =>
       levenshteinDistance(nom.trim().toLowerCase(), a.nom.trim().toLowerCase()) -
       levenshteinDistance(nom.trim().toLowerCase(), b.nom.trim().toLowerCase())
@@ -184,4 +184,3 @@ export class ProduitService {
     return keys[0];
   }
 }
-
