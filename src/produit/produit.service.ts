@@ -65,7 +65,7 @@ export class ProduitService {
       throw new NotFoundException(`Aucune clé trouvée pour le nom "${nom}"`);
     }
 
-    // Fonction de calcul de la distance de Levenshtein
+    // Calcul de la distance de Levenshtein
     const levenshteinDistance = (a: string, b: string): number => {
       const m = a.length, n = b.length;
       const dp: number[][] = Array.from({ length: m + 1 }, () => new Array(n + 1).fill(0));
@@ -84,6 +84,7 @@ export class ProduitService {
       return dp[m][n];
     };
 
+    // Tri des candidats en fonction de la distance
     candidates.sort((a, b) =>
       levenshteinDistance(nom.trim().toLowerCase(), a.nom.trim().toLowerCase()) -
       levenshteinDistance(nom.trim().toLowerCase(), b.nom.trim().toLowerCase())
