@@ -9,15 +9,13 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   const logger = new Logger('Bootstrap');
 
-  // Augmenter la limite de taille pour les requêtes JSON et urlencoded
+  // Limite la taille des payloads
   app.use(json({ limit: '10mb' }));
   app.use(urlencoded({ limit: '10mb', extended: true }));
 
-  // Définition des origines autorisées pour CORS
-  // Vous pouvez définir plusieurs origines dans une variable d’environnement (séparées par une virgule)
-  const envOrigins = process.env.CORS_ORIGIN;
-  const defaultOrigins = [
-    'http://localhost:5173',
+  // Définir les origines autorisées pour CORS (sans slash final pour éviter les incohérences)
+  const allowedOrigins = [
+    process.env.CORS_ORIGIN || 'http://localhost:5173',
     'https://frontendcleservice.onrender.com',
     'https://frontend-fkzn.onrender.com',
     'https://cleservice.com',
@@ -27,22 +25,16 @@ async function bootstrap() {
     'http://localhost:5175',
     'http://localhost:4173',
   ];
-  const allowedOrigins = envOrigins 
-    ? envOrigins.split(',').map(origin => origin.trim().replace(/\/$/, ''))
-    : defaultOrigins;
 
-  // Activer CORS en vérifiant l'origine de la requête
+  // Activer CORS en vérifiant l'origine
   app.enableCors({
     origin: (origin, callback) => {
-      // Autoriser les requêtes sans origine (ex : Postman ou scripts internes)
-      if (!origin) {
-        return callback(null, true);
-      }
-      // Vérifier si l'origine figure dans la liste autorisée
+      // Autoriser les requêtes sans origine (ex. Postman)
+      if (!origin) return callback(null, true);
       if (allowedOrigins.includes(origin)) {
         return callback(null, origin);
       } else {
-        callback(new Error(`Origin ${origin} non autorisée par CORS`));
+        return callback(new Error(`Origin ${origin} non autorisée par CORS`));
       }
     },
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
@@ -50,7 +42,7 @@ async function bootstrap() {
     credentials: true,
   });
 
-  // Utilisation d'un ValidationPipe global
+  // Validation globale
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,
@@ -59,10 +51,10 @@ async function bootstrap() {
     }),
   );
 
-  // Ajout de l'intercepteur global pour logger les requêtes
+  // Ajout d'un intercepteur global pour le logging
   app.useGlobalInterceptors(new LoggingInterceptor());
 
-  // Configuration de Swagger pour la documentation de l'API
+  // Configuration de Swagger
   const config = new DocumentBuilder()
     .setTitle('API Stancer')
     .setDescription('API pour générer des pages de paiement avec Stancer')
@@ -71,11 +63,10 @@ async function bootstrap() {
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('api', app, document);
 
-  // Définir le port d'écoute de l'application
+  // Démarrage de l'application
   const port = process.env.PORT || 3000;
   await app.listen(port, '0.0.0.0');
   logger.log(`Application running on port ${port}`);
 }
 
 bootstrap();
-
