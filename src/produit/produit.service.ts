@@ -15,12 +15,12 @@ export class ProduitService {
     @Inject(CACHE_MANAGER) private cacheManager: Cache,
   ) {}
 
-  // Recherche exacte insensible aux accents et à la casse
+  // Recherche exacte insensible aux accents et à la casse (utilise la fonction de normalisation côté SQL avec ILIKE)
   async getKeyByName(nom: string): Promise<CatalogueCle> {
     this.logger.log(`Service: Recherche de la clé avec le nom: ${nom}`);
     const key = await this.catalogueCleRepository
       .createQueryBuilder('cle')
-      .where('unaccent(lower(cle.nom)) = unaccent(lower(:nom))', { nom: nom.trim() })
+      .where('lower(cle.nom) = lower(:nom)', { nom: nom.trim() })
       .getOne();
     if (!key) {
       throw new NotFoundException('Produit introuvable.');
@@ -28,28 +28,27 @@ export class ProduitService {
     return key;
   }
 
-  // Recherche flexible pour trouver le produit le plus similaire
+  // Recherche flexible pour trouver le produit le plus similaire sans utiliser "unaccent"
   async findBestKeyByName(nom: string): Promise<CatalogueCle> {
     this.logger.log(`Service: Recherche de la meilleure correspondance pour le nom: ${nom}`);
+    // Définition d'une valeur de recherche en insensible à la casse
+    const searchValue = `%${nom.trim().toLowerCase()}%`;
+    // Utilisation de ILIKE pour récupérer des candidats
+    let candidates = await this.catalogueCleRepository
+      .createQueryBuilder('cle')
+      .where('lower(cle.nom) ILIKE :searchValue', { searchValue })
+      .getMany();
 
-    // Fonction de normalisation pour la comparaison : conserver uniquement les caractères alphabétiques en minuscule
+    if (!candidates || candidates.length === 0) {
+      throw new NotFoundException(`Aucune clé trouvée pour le nom "${nom}"`);
+    }
+
+    // Fonction de normalisation en supprimant les caractères non alphabétiques
     const normalizeForComparison = (str: string): string => {
-      // Remplace tous les caractères qui ne sont pas des lettres (a-z) par une chaîne vide.
       return str.toLowerCase().replace(/[^a-z]/g, '');
     };
 
     const targetNormalized = normalizeForComparison(nom.trim());
-
-    // Rechercher des candidats en utilisant une requête large (LIKE)
-    const searchValue = `%${nom.trim().toLowerCase()}%`;
-    let candidates = await this.catalogueCleRepository
-      .createQueryBuilder('cle')
-      .where('unaccent(lower(cle.nom)) LIKE unaccent(:searchValue)', { searchValue })
-      .getMany();
-
-    if (candidates.length === 0) {
-      throw new NotFoundException(`Aucune clé trouvée pour le nom "${nom}"`);
-    }
 
     // Fonction de calcul de la distance de Levenshtein
     const levenshteinDistance = (a: string, b: string): number => {
@@ -70,13 +69,13 @@ export class ProduitService {
       return dp[m][n];
     };
 
-    // Trier les candidats selon leur similarité avec la chaîne cible
+    // Tri des candidats par similarité avec le nom recherché
     candidates.sort((a, b) =>
       levenshteinDistance(normalizeForComparison(a.nom), targetNormalized) -
       levenshteinDistance(normalizeForComparison(b.nom), targetNormalized)
     );
 
-    // Renvoyer le candidat le plus proche
+    this.logger.log(`Meilleure correspondance trouvée : ${candidates[0].nom}`);
     return candidates[0];
   }
 
@@ -209,4 +208,3 @@ export class ProduitService {
     return keys[0];
   }
 }
-
