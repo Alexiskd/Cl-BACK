@@ -30,7 +30,7 @@ export class ProduitController {
     return this.produitService.getKeysByMarque(marque);
   }
 
-  // Recherche une clé par son nom exact – on renvoie une exception NotFound si aucune clé n'est trouvée
+  // Recherche une clé par son nom exact – renvoie une exception NotFound si aucune clé n'est trouvée
   @Get('cles/by-name')
   async getKeyByName(@Query('nom') nom: string): Promise<CatalogueCle> {
     this.logger.log(`Requête reçue sur /cles/by-name avec nom: ${nom}`);
@@ -41,11 +41,18 @@ export class ProduitController {
     return key;
   }
 
-  // Recherche et retourne la meilleure correspondance selon le nom (distance de Levenshtein)
+  // Recherche la meilleure correspondance par nom (distance de Levenshtein)
   @Get('cles/best-by-name')
   async bestKeyByName(@Query('nom') nom: string): Promise<CatalogueCle> {
     this.logger.log(`Requête pour la meilleure correspondance par nom: ${nom}`);
-    return this.produitService.findBestKeyByName(nom);
+    return this.produitService.findClosestKey(nom);
+  }
+
+  // Nouvelle route : Recherche la clé qui ressemble le plus au nom fourni
+  @Get('cles/closest')
+  async findClosestKey(@Query('nom') nom: string): Promise<CatalogueCle> {
+    this.logger.log(`Requête pour trouver la clé la plus proche pour le nom: ${nom}`);
+    return this.produitService.findClosestKey(nom);
   }
 
   // Mise à jour d'une clé identifiée par son nom
@@ -61,7 +68,6 @@ export class ProduitController {
   // Ajout d'une nouvelle clé
   @Post('cles/add')
   async addKey(@Body() newKey: CreateKeyDto): Promise<CatalogueCle> {
-    // Création d'un objet clé en assurant des valeurs par défaut pour les champs optionnels
     const keyToAdd: CatalogueCle = {
       ...newKey,
       id: undefined,
@@ -131,9 +137,7 @@ export class ProduitController {
     return this.produitService.getKeyByIndex(parseInt(index, 10));
   }
 
-  // ------------------ Nouvelles routes pour la gestion par marque ------------------
-
-  // Retourne le nombre de clés pour une marque donnée
+  // Récupère le nombre de clés pour une marque donnée
   @Get('cles/brand/:brand/count')
   async countKeysByBrand(@Param('brand') brand: string): Promise<{ count: number }> {
     this.logger.log(`Requête GET sur /cles/brand/${brand}/count`);
