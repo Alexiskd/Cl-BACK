@@ -1,4 +1,3 @@
-// src/produit/create-key.dto.ts
 import { IsString, IsNotEmpty, IsBoolean, IsNumber, IsOptional, IsEnum } from 'class-validator';
 
 export enum TypeReproduction {
