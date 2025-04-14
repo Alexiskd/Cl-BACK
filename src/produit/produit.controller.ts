@@ -70,6 +70,7 @@ export class ProduitController {
       besoinPhoto: newKey.besoinPhoto ?? false,
       besoinNumeroCle: newKey.besoinNumeroCle ?? false,
       besoinNumeroCarte: newKey.besoinNumeroCarte ?? false,
+      fraisDeDossier: newKey.fraisDeDossier ?? 0,
     };
     this.logger.log(`Requête POST reçue pour ajouter la clé: ${JSON.stringify(keyToAdd)}`);
     return this.produitService.addKey(keyToAdd);
@@ -95,6 +96,7 @@ export class ProduitController {
       besoinPhoto: newKey.besoinPhoto ?? false,
       besoinNumeroCle: newKey.besoinNumeroCle ?? false,
       besoinNumeroCarte: newKey.besoinNumeroCarte ?? false,
+      fraisDeDossier: newKey.fraisDeDossier ?? 0,
     }));
     this.logger.log(`Requête POST reçue pour ajouter ${keysToAdd.length} clés.`);
     return this.produitService.addKeys(keysToAdd);
