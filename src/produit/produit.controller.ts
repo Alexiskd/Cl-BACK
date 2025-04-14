@@ -9,6 +9,7 @@ import {
   Delete,
   Logger,
   UseInterceptors,
+  NotFoundException,
 } from '@nestjs/common';
 import { ProduitService } from './produit.service';
 import { CatalogueCle } from '../entities/catalogue-cle.entity';
@@ -29,11 +30,15 @@ export class ProduitController {
     return this.produitService.getKeysByMarque(marque);
   }
 
-  // Recherche une clé par son nom exact
+  // Recherche une clé par son nom exact – on renvoie une exception NotFound si aucune clé n'est trouvée
   @Get('cles/by-name')
-  async getKeyByName(@Query('nom') nom: string): Promise<CatalogueCle | undefined> {
+  async getKeyByName(@Query('nom') nom: string): Promise<CatalogueCle> {
     this.logger.log(`Requête reçue sur /cles/by-name avec nom: ${nom}`);
-    return this.produitService.getKeyByName(nom);
+    const key = await this.produitService.getKeyByName(nom);
+    if (!key) {
+      throw new NotFoundException(`Clé avec le nom "${nom}" introuvable`);
+    }
+    return key;
   }
 
   // Recherche et retourne la meilleure correspondance selon le nom (distance de Levenshtein)
@@ -56,17 +61,18 @@ export class ProduitController {
   // Ajout d'une nouvelle clé
   @Post('cles/add')
   async addKey(@Body() newKey: CreateKeyDto): Promise<CatalogueCle> {
+    // Création d'un objet clé en assurant des valeurs par défaut pour les champs optionnels
     const keyToAdd: CatalogueCle = {
       ...newKey,
       id: undefined,
       imageUrl: newKey.imageUrl ?? '',
       prixSansCartePropriete: newKey.prixSansCartePropriete ?? 0,
-      referenceEbauche: newKey.referenceEbauche?.trim() || null,
+      referenceEbauche: newKey.referenceEbauche?.trim() || '',
       typeReproduction: newKey.typeReproduction,
       descriptionNumero: newKey.descriptionNumero ?? '',
       descriptionProduit: newKey.descriptionProduit ?? '',
       estCleAPasse: newKey.estCleAPasse ?? false,
-      prixCleAPasse: newKey.prixCleAPasse ?? null,
+      prixCleAPasse: newKey.prixCleAPasse ?? 0,
       besoinPhoto: newKey.besoinPhoto ?? false,
       besoinNumeroCle: newKey.besoinNumeroCle ?? false,
       besoinNumeroCarte: newKey.besoinNumeroCarte ?? false,
@@ -86,12 +92,12 @@ export class ProduitController {
       id: undefined,
       imageUrl: newKey.imageUrl ?? '',
       prixSansCartePropriete: newKey.prixSansCartePropriete ?? 0,
-      referenceEbauche: newKey.referenceEbauche?.trim() || null,
+      referenceEbauche: newKey.referenceEbauche?.trim() || '',
       typeReproduction: newKey.typeReproduction,
       descriptionNumero: newKey.descriptionNumero ?? '',
       descriptionProduit: newKey.descriptionProduit ?? '',
       estCleAPasse: newKey.estCleAPasse ?? false,
-      prixCleAPasse: newKey.prixCleAPasse ?? null,
+      prixCleAPasse: newKey.prixCleAPasse ?? 0,
       besoinPhoto: newKey.besoinPhoto ?? false,
       besoinNumeroCle: newKey.besoinNumeroCle ?? false,
       besoinNumeroCarte: newKey.besoinNumeroCarte ?? false,
