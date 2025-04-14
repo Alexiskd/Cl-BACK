@@ -41,8 +41,7 @@ export class ProduitService {
         'prixCleAPasse',
         'besoinPhoto',
         'besoinNumeroCle',
-        'besoinNumeroCarte',
-        'fraisDeDossier',     // Inclus pour afficher les frais de dossier
+        'besoinNumeroCarte'
       ],
       where: { marque },
     });
@@ -138,8 +137,7 @@ export class ProduitService {
         'prixCleAPasse',
         'besoinPhoto',
         'besoinNumeroCle',
-        'besoinNumeroCarte',
-        'fraisDeDossier',
+        'besoinNumeroCarte'
       ],
       take: limit,
       skip: skip,
