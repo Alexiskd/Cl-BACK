@@ -15,50 +15,26 @@ export class ProduitService {
     @Inject(CACHE_MANAGER) private cacheManager: Cache,
   ) {}
 
-  async getKeysByMarque(marque: string): Promise<CatalogueCle[]> {
-    this.logger.log(`Service: Recherche des clés pour la marque: ${marque}`);
-    if (!marque) return this.getAllKeys(10, 0);
-    const cacheKey = `keysByMarque_${marque}`;
-    const cached = await this.cacheManager.get<CatalogueCle[]>(cacheKey);
-    if (cached) {
-      this.logger.log(`Service: Clés récupérées du cache pour marque ${marque}`);
-      return cached;
-    }
-    const keys = await this.catalogueCleRepository.find({
-      select: [
-        'id',
-        'nom',
-        'marque',
-        'prix',
-        'prixSansCartePropriete',
-        'cleAvecCartePropriete',
-        'imageUrl',
-        'referenceEbauche',
-        'typeReproduction',
-        'descriptionNumero',
-        'descriptionProduit',
-        'estCleAPasse',
-        'prixCleAPasse',
-        'besoinPhoto',
-        'besoinNumeroCle',
-        'besoinNumeroCarte'
-      ],
-      where: { marque },
-    });
-    await this.cacheManager.set(cacheKey, keys, 10);
-    return keys;
-  }
-
-  async getKeyByName(nom: string): Promise<CatalogueCle | undefined> {
+  // Recherche exacte insensible aux accents et à la casse
+  async getKeyByName(nom: string): Promise<CatalogueCle> {
     this.logger.log(`Service: Recherche de la clé avec le nom: ${nom}`);
-    return this.catalogueCleRepository.findOne({ where: { nom } });
+    const key = await this.catalogueCleRepository
+      .createQueryBuilder('cle')
+      .where('unaccent(lower(cle.nom)) = unaccent(lower(:nom))', { nom: nom.trim() })
+      .getOne();
+    if (!key) {
+      throw new NotFoundException('Produit introuvable.');
+    }
+    return key;
   }
 
-  async findClosestKey(nom: string): Promise<CatalogueCle> {
-    this.logger.log(`Service: Recherche de la clé la plus proche pour le nom "${nom}"`);
+  // Recherche flexible pour trouver la meilleure correspondance par nom
+  async findBestKeyByName(nom: string): Promise<CatalogueCle> {
+    this.logger.log(`Service: Recherche de la meilleure correspondance pour le nom: ${nom}`);
+    const searchValue = `%${nom.trim().toLowerCase()}%`;
     const candidates = await this.catalogueCleRepository
       .createQueryBuilder('cle')
-      .where('cle.nom ILIKE :nom', { nom: `%${nom.trim()}%` })
+      .where('unaccent(lower(cle.nom)) LIKE unaccent(lower(:searchValue))', { searchValue })
       .getMany();
 
     if (candidates.length === 0) {
@@ -84,7 +60,6 @@ export class ProduitService {
       return dp[m][n];
     };
 
-    // Tri des candidats en fonction de la distance (la plus petite distance est la meilleure correspondance)
     candidates.sort((a, b) =>
       levenshteinDistance(nom.trim().toLowerCase(), a.nom.trim().toLowerCase()) -
       levenshteinDistance(nom.trim().toLowerCase(), b.nom.trim().toLowerCase())
@@ -117,12 +92,13 @@ export class ProduitService {
     return this.catalogueCleRepository.save(newKeys);
   }
 
-  async getAllKeys(limit: number, skip: number): Promise<CatalogueCle[]> {
-    this.logger.log(`Service: Récupération de toutes les clés (limit: ${limit}, skip: ${skip})`);
-    const cacheKey = `allKeys_${limit}_${skip}`;
+  async getKeysByMarque(marque: string): Promise<CatalogueCle[]> {
+    this.logger.log(`Service: Recherche des clés pour la marque: ${marque}`);
+    if (!marque) return this.getAllKeys(10, 0);
+    const cacheKey = `keysByMarque_${marque}`;
     const cached = await this.cacheManager.get<CatalogueCle[]>(cacheKey);
     if (cached) {
-      this.logger.log('Service: Clés récupérées du cache');
+      this.logger.log(`Service: Clés récupérées du cache pour la marque ${marque}`);
       return cached;
     }
     const keys = await this.catalogueCleRepository.find({
@@ -137,12 +113,43 @@ export class ProduitService {
         'referenceEbauche',
         'typeReproduction',
         'descriptionNumero',
-        'descriptionProduit',
         'estCleAPasse',
         'prixCleAPasse',
         'besoinPhoto',
         'besoinNumeroCle',
-        'besoinNumeroCarte'
+        'besoinNumeroCarte',
+      ],
+      where: { marque },
+    });
+    await this.cacheManager.set(cacheKey, keys, 10);
+    return keys;
+  }
+
+  async getAllKeys(limit: number, skip: number): Promise<CatalogueCle[]> {
+    this.logger.log(`Service: Récupération de toutes les clés (limit: ${limit}, skip: ${skip})`);
+    const cacheKey = `allKeys_${limit}_${skip}`;
+    const cached = await this.cacheManager.get<CatalogueCle[]>(cacheKey);
+    if (cached) {
+      this.logger.log("Service: Clés récupérées du cache");
+      return cached;
+    }
+    const keys = await this.catalogueCleRepository.find({
+      select: [
+        'id',
+        'nom',
+        'marque',
+        'prix',
+        'prixSansCartePropriete',
+        'cleAvecCartePropriete',
+        'imageUrl',
+        'referenceEbauche',
+        'typeReproduction',
+        'descriptionNumero',
+        'estCleAPasse',
+        'prixCleAPasse',
+        'besoinPhoto',
+        'besoinNumeroCle',
+        'besoinNumeroCarte',
       ],
       take: limit,
       skip: skip,
@@ -170,7 +177,7 @@ export class ProduitService {
     this.logger.log(`Service: Suppression de la clé avec le nom: ${nom}`);
     const result = await this.catalogueCleRepository.delete({ nom });
     if (result.affected === 0) throw new NotFoundException(`Clé avec le nom "${nom}" introuvable`);
-    this.logger.log(`Service: Clé avec le nom "${nom}" supprimée avec succès`);
+    this.logger.log(`Service: Clé "${nom}" supprimée avec succès`);
   }
 
   async countKeysByBrand(brand: string): Promise<number> {
@@ -179,7 +186,7 @@ export class ProduitService {
   }
 
   async getKeyByBrandAndIndex(brand: string, index: number): Promise<CatalogueCle> {
-    this.logger.log(`Service: Récupération de la clé pour la marque: ${brand} à l'index: ${index}`);
+    this.logger.log(`Service: Récupération de la clé de la marque "${brand}" à l'index: ${index}`);
     const keys = await this.catalogueCleRepository.find({
       where: { marque: brand },
       order: { id: 'DESC' },
