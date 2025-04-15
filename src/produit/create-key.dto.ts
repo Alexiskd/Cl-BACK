@@ -41,7 +41,6 @@ export class CreateKeyDto {
   @IsOptional()
   descriptionNumero?: string = '';
 
-  // Description générale du produit
   @IsString()
   @IsOptional()
   descriptionProduit?: string = '';
@@ -54,18 +53,19 @@ export class CreateKeyDto {
   @IsOptional()
   prixCleAPasse?: number = 0;
 
-  // Indique si des photos sont requises
   @IsBoolean()
   @IsOptional()
   besoinPhoto?: boolean = false;
 
-  // Indique si le numéro de clé est requis
   @IsBoolean()
   @IsOptional()
   besoinNumeroCle?: boolean = false;
 
-  // Indique si le numéro de carte est requis
   @IsBoolean()
   @IsOptional()
   besoinNumeroCarte?: boolean = false;
+
+  @IsNumber()
+  @IsOptional()
+  fraisDeDossier?: number;
 }
