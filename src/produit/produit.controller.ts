@@ -1,4 +1,4 @@
-import {  
+import {
   Controller,
   Get,
   Query,
@@ -30,7 +30,7 @@ export class ProduitController {
     return this.produitService.getKeysByMarque(marque);
   }
 
-  // Recherche une clé par son nom exact – renvoie une exception NotFound si aucune clé n'est trouvée
+  // Recherche d'une clé par nom exact
   @Get('cles/by-name')
   async getKeyByName(@Query('nom') nom: string): Promise<CatalogueCle> {
     this.logger.log(`Requête reçue sur /cles/by-name avec nom: ${nom}`);
@@ -41,14 +41,14 @@ export class ProduitController {
     return key;
   }
 
-  // Recherche la clé qui ressemble le plus au nom fourni (distance de Levenshtein)
+  // Recherche de la clé la plus proche (distance de Levenshtein)
   @Get('cles/closest')
   async findClosestKey(@Query('nom') nom: string): Promise<CatalogueCle> {
     this.logger.log(`Requête pour trouver la clé la plus proche pour le nom: ${nom}`);
     return this.produitService.findClosestKey(nom);
   }
 
-  // Mise à jour d'une clé identifiée par son nom
+  // Mise à jour d'une clé par son nom
   @Put('cles/update')
   async updateKeyByName(
     @Query('nom') nom: string,
@@ -117,20 +117,20 @@ export class ProduitController {
     return this.produitService.getAllKeys(limitNumber, skipNumber);
   }
 
-  // Retourne le nombre total de clés dans la base
+  // Retourne le nombre total de clés
   @Get('cles/count')
   async countKeys(): Promise<{ count: number }> {
     const count = await this.produitService.countKeys();
     return { count };
   }
 
-  // Récupère une clé par son index (ordre décroissant par id)
+  // Récupère une clé par son index (ordre décroissant d'ID)
   @Get('cles/index/:index')
   async getKeyByIndex(@Param('index') index: string): Promise<CatalogueCle> {
     return this.produitService.getKeyByIndex(parseInt(index, 10));
   }
 
-  // Récupère le nombre de clés pour une marque donnée
+  // Retourne le nombre de clés pour une marque donnée
   @Get('cles/brand/:brand/count')
   async countKeysByBrand(@Param('brand') brand: string): Promise<{ count: number }> {
     this.logger.log(`Requête GET sur /cles/brand/${brand}/count`);
@@ -138,7 +138,7 @@ export class ProduitController {
     return { count };
   }
 
-  // Récupère une clé par son index pour une marque donnée (ordre décroissant par id)
+  // Récupère une clé par son index pour une marque donnée
   @Get('cles/brand/:brand/index/:index')
   async getKeyByBrandAndIndex(
     @Param('brand') brand: string,
