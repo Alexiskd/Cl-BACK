@@ -41,7 +41,7 @@ export class CreateKeyDto {
   @IsOptional()
   descriptionNumero?: string = '';
 
-  // Nouveau champ : description générale du produit
+  // Description générale du produit
   @IsString()
   @IsOptional()
   descriptionProduit?: string = '';
@@ -69,3 +69,4 @@ export class CreateKeyDto {
   @IsOptional()
   besoinNumeroCarte?: boolean = false;
 }
+
