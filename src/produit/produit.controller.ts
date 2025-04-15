@@ -30,7 +30,7 @@ export class ProduitController {
     return this.produitService.getKeysByMarque(marque);
   }
 
-  // Recherche d'une clé par nom exact
+  // Recherche d'une clé par son nom exact
   @Get('cles/by-name')
   async getKeyByName(@Query('nom') nom: string): Promise<CatalogueCle> {
     this.logger.log(`Requête reçue sur /cles/by-name avec nom: ${nom}`);
@@ -41,7 +41,7 @@ export class ProduitController {
     return key;
   }
 
-  // Recherche de la clé la plus proche (distance de Levenshtein)
+  // Recherche de la clé la plus proche (basée sur la distance de Levenshtein)
   @Get('cles/closest')
   async findClosestKey(@Query('nom') nom: string): Promise<CatalogueCle> {
     this.logger.log(`Requête pour trouver la clé la plus proche pour le nom: ${nom}`);
