@@ -41,7 +41,7 @@ export class ProduitController {
     return key;
   }
 
-  // Recherche la clé qui ressemble le plus au nom fourni (utilisant la distance de Levenshtein)
+  // Recherche la clé qui ressemble le plus au nom fourni (distance de Levenshtein)
   @Get('cles/closest')
   async findClosestKey(@Query('nom') nom: string): Promise<CatalogueCle> {
     this.logger.log(`Requête pour trouver la clé la plus proche pour le nom: ${nom}`);
