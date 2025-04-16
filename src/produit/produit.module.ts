@@ -17,4 +17,3 @@ import { CatalogueCle } from '../entities/catalogue-cle.entity';
   providers: [ProduitService],
 })
 export class ProduitModule {}
-
