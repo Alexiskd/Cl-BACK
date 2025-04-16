@@ -106,4 +106,3 @@ export class ProduitService {
     await this.catalogueCleRepository.delete({ nom });
   }
 }
-
