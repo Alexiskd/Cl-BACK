@@ -9,7 +9,6 @@ import {
   Delete,
   Logger,
   UseInterceptors,
-  NotFoundException,
 } from '@nestjs/common';
 import { ProduitService } from './produit.service';
 import { CatalogueCle } from '../entities/catalogue-cle.entity';
@@ -32,14 +31,10 @@ export class ProduitController {
   @Get('cles/by-name')
   async getKeyByName(@Query('nom') nom: string): Promise<CatalogueCle> {
     this.logger.log(`Requête reçue sur /cles/by-name avec nom: ${nom}`);
-    const key = await this.produitService.getKeyByName(nom);
-    if (!key) {
-      throw new NotFoundException(`Clé avec le nom "${nom}" introuvable`);
-    }
-    return key;
+    return this.produitService.getKeyByName(nom);
   }
 
-  // Nouvel endpoint pour la meilleure correspondance par nom
+  // Endpoint pour récupérer la meilleure correspondance par nom
   @Get('cles/best-by-name')
   async bestKeyByName(@Query('nom') nom: string): Promise<CatalogueCle> {
     this.logger.log(`Requête pour la meilleure correspondance par nom: ${nom}`);
@@ -77,7 +72,7 @@ export class ProduitController {
       besoinPhoto: newKey.besoinPhoto ?? false,
       besoinNumeroCle: newKey.besoinNumeroCle ?? false,
       besoinNumeroCarte: newKey.besoinNumeroCarte ?? false,
-      fraisDeDossier: (newKey as any).fraisDeDossier ?? 0,
+      fraisDeDossier: newKey.fraisDeDossier ?? 0,
     }));
     this.logger.log(`Requête POST reçue pour ajouter ${keysToAdd.length} clés.`);
     return this.produitService.addKeys(keysToAdd);
