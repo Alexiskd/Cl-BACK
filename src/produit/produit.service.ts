@@ -1,119 +1,108 @@
-import {
-  Controller,
-  Get,
-  Query,
-  Param,
-  Put,
-  Body,
-  Post,
-  Delete,
-  Logger,
-  UseInterceptors,
-} from '@nestjs/common';
-import { ProduitService } from './produit.service';
+import { Injectable, Logger, NotFoundException, BadRequestException, Inject } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
 import { CatalogueCle } from '../entities/catalogue-cle.entity';
-import { CreateKeyDto } from './create-key.dto';
-import { LoggingInterceptor } from '../logging.interceptor';
+import { CACHE_MANAGER } from '@nestjs/cache-manager';
+import { Cache } from 'cache-manager';
 
-@UseInterceptors(LoggingInterceptor)
-@Controller('produit')
-export class ProduitController {
-  private readonly logger = new Logger(ProduitController.name);
+@Injectable()
+export class ProduitService {
+  private readonly logger = new Logger(ProduitService.name);
 
-  constructor(private readonly produitService: ProduitService) {}
+  constructor(
+    @InjectRepository(CatalogueCle)
+    private readonly catalogueCleRepository: Repository<CatalogueCle>,
+    @Inject(CACHE_MANAGER) private cacheManager: Cache,
+  ) {}
 
-  @Get('cles')
-  async getKeysByMarque(@Query('marque') marque: string): Promise<CatalogueCle[]> {
-    this.logger.log(`Requête reçue sur /cles avec marque: ${marque}`);
-    return this.produitService.getKeysByMarque(marque);
-  }
+  async getKeyByName(nom: string): Promise<CatalogueCle> {
+    const key = await this.catalogueCleRepository
+      .createQueryBuilder('cle')
+      .where('unaccent(lower(cle.nom)) = unaccent(lower(:nom))', { nom: nom.trim() })
+      .getOne();
 
-  @Get('cles/by-name')
-  async getKeyByName(@Query('nom') nom: string): Promise<CatalogueCle> {
-    this.logger.log(`Requête reçue sur /cles/by-name avec nom: ${nom}`);
-    return this.produitService.getKeyByName(nom);
-  }
-
-  // Endpoint pour récupérer la meilleure correspondance par nom
-  @Get('cles/best-by-name')
-  async bestKeyByName(@Query('nom') nom: string): Promise<CatalogueCle> {
-    this.logger.log(`Requête pour la meilleure correspondance par nom: ${nom}`);
-    return this.produitService.findBestKeyByName(nom);
-  }
-
-  @Put('cles/update')
-  async updateKeyByName(@Query('nom') nom: string, @Body() updates: Partial<CreateKeyDto>): Promise<CatalogueCle> {
-    this.logger.log(`Requête PUT reçue pour nom: ${nom}`);
-    return this.produitService.updateKeyByName(nom, updates);
-  }
-
-  @Post('cles/add')
-  async addKey(@Body() newKey: CreateKeyDto): Promise<CatalogueCle> {
-    this.logger.log(`Requête POST reçue pour ajouter la clé: ${JSON.stringify(newKey)}`);
-    return this.produitService.addKey(newKey as CatalogueCle);
-  }
-
-  @Post('cles/add-many')
-  async addManyKeys(@Body() newKeys: CreateKeyDto[]): Promise<CatalogueCle[]> {
-    if (!Array.isArray(newKeys)) {
-      throw new Error('Le corps de la requête doit être un tableau de clés.');
+    if (!key) {
+      throw new NotFoundException('Produit introuvable.');
     }
-    const keysToAdd: CatalogueCle[] = newKeys.map((newKey) => ({
-      ...newKey,
-      id: undefined,
-      imageUrl: newKey.imageUrl ?? '',
-      prixSansCartePropriete: newKey.prixSansCartePropriete ?? 0,
-      referenceEbauche: newKey.referenceEbauche?.trim() || null,
-      typeReproduction: newKey.typeReproduction,
-      descriptionNumero: newKey.descriptionNumero ?? '',
-      descriptionProduit: newKey.descriptionProduit ?? '',
-      estCleAPasse: newKey.estCleAPasse ?? false,
-      prixCleAPasse: newKey.prixCleAPasse ?? null,
-      besoinPhoto: newKey.besoinPhoto ?? false,
-      besoinNumeroCle: newKey.besoinNumeroCle ?? false,
-      besoinNumeroCarte: newKey.besoinNumeroCarte ?? false,
-      fraisDeDossier: newKey.fraisDeDossier ?? 0,
-    }));
-    this.logger.log(`Requête POST reçue pour ajouter ${keysToAdd.length} clés.`);
-    return this.produitService.addKeys(keysToAdd);
+    return key;
   }
 
-  @Get('cles/all')
-  async getAllKeys(@Query('limit') limit?: string, @Query('skip') skip?: string): Promise<CatalogueCle[]> {
-    this.logger.log('Requête GET reçue sur /cles/all');
-    const limitNumber = limit ? parseInt(limit, 10) : 10;
-    const skipNumber = skip ? parseInt(skip, 10) : 0;
-    return this.produitService.getAllKeys(limitNumber, skipNumber);
+  async findClosestMatch(nom: string): Promise<CatalogueCle> {
+    const keys = await this.catalogueCleRepository.find();
+
+    if (!keys.length) throw new NotFoundException('Aucune clé disponible.');
+
+    const levenshteinDistance = (a: string, b: string): number => {
+      const dp = Array.from({ length: a.length + 1 }, () => Array(b.length + 1).fill(0));
+      for (let i = 0; i <= a.length; i++) dp[i][0] = i;
+      for (let j = 0; j <= b.length; j++) dp[0][j] = j;
+
+      for (let i = 1; i <= a.length; i++)
+        for (let j = 1; j <= b.length; j++)
+          dp[i][j] = Math.min(
+            dp[i - 1][j] + 1,
+            dp[i][j - 1] + 1,
+            dp[i - 1][j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1),
+          );
+
+      return dp[a.length][b.length];
+    };
+
+    keys.sort(
+      (a, b) =>
+        levenshteinDistance(nom.toLowerCase(), a.nom.toLowerCase()) -
+        levenshteinDistance(nom.toLowerCase(), b.nom.toLowerCase()),
+    );
+
+    return keys[0];
   }
 
-  @Get('cles/count')
-  async countKeys(): Promise<{ count: number }> {
-    const count = await this.produitService.countKeys();
-    return { count };
+  async updateKeyByName(nom: string, updates: Partial<CatalogueCle>): Promise<CatalogueCle> {
+    const key = await this.catalogueCleRepository.findOne({ where: { nom } });
+    if (!key) throw new NotFoundException(`Clé "${nom}" introuvable`);
+    Object.assign(key, updates);
+    return this.catalogueCleRepository.save(key);
   }
 
-  @Get('cles/index/:index')
-  async getKeyByIndex(@Param('index') index: string): Promise<CatalogueCle> {
-    return this.produitService.getKeyByIndex(parseInt(index, 10));
+  async addKey(newKey: CatalogueCle): Promise<CatalogueCle> {
+    const existingKey = await this.catalogueCleRepository.findOne({ where: { nom: newKey.nom } });
+    if (existingKey) throw new BadRequestException(`Clé "${newKey.nom}" existe déjà.`);
+    return this.catalogueCleRepository.save(newKey);
   }
 
-  @Get('cles/brand/:brand/count')
-  async countKeysByBrand(@Param('brand') brand: string): Promise<{ count: number }> {
-    this.logger.log(`Requête GET sur /cles/brand/${brand}/count`);
-    const count = await this.produitService.countKeysByBrand(brand);
-    return { count };
+  async addKeys(newKeys: CatalogueCle[]): Promise<CatalogueCle[]> {
+    return this.catalogueCleRepository.save(newKeys);
   }
 
-  @Get('cles/brand/:brand/index/:index')
-  async getKeyByBrandAndIndex(@Param('brand') brand: string, @Param('index') index: string): Promise<CatalogueCle> {
-    this.logger.log(`Requête GET sur /cles/brand/${brand}/index/${index}`);
-    return this.produitService.getKeyByBrandAndIndex(brand, parseInt(index, 10));
+  async getKeysByMarque(marque: string): Promise<CatalogueCle[]> {
+    return this.catalogueCleRepository.find({ where: { marque } });
   }
 
-  @Delete('cles/delete')
-  async deleteKeyByName(@Query('nom') nom: string): Promise<{ message: string }> {
-    this.logger.log(`Requête DELETE reçue pour nom: ${nom}`);
-    await this.produitService.deleteKeyByName(nom);
-    return { message: `Clé avec le nom "${nom}" a été supprimée avec succès.` };
+  async getAllKeys(limit: number, skip: number): Promise<CatalogueCle[]> {
+    return this.catalogueCleRepository.find({ take: limit, skip, order: { id: 'DESC' } });
+  }
+
+  async countKeys(): Promise<number> {
+    return this.catalogueCleRepository.count();
+  }
+
+  async getKeyByIndex(index: number): Promise<CatalogueCle> {
+    const keys = await this.catalogueCleRepository.find({ skip: index, take: 1, order: { id: 'DESC' } });
+    if (!keys[0]) throw new NotFoundException('Clé non trouvée.');
+    return keys[0];
+  }
+
+  async countKeysByBrand(brand: string): Promise<number> {
+    return this.catalogueCleRepository.count({ where: { marque: brand } });
+  }
+
+  async getKeyByBrandAndIndex(brand: string, index: number): Promise<CatalogueCle> {
+    const keys = await this.catalogueCleRepository.find({ where: { marque: brand }, skip: index, take: 1 });
+    if (!keys[0]) throw new NotFoundException('Clé non trouvée.');
+    return keys[0];
+  }
+
+  async deleteKeyByName(nom: string): Promise<void> {
+    await this.catalogueCleRepository.delete({ nom });
   }
 }
