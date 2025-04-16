@@ -67,5 +67,5 @@ export class CreateKeyDto {
 
   @IsNumber()
   @IsOptional()
-  fraisDeDossier?: number;
+  fraisDeDossier?: number = 0;
 }
