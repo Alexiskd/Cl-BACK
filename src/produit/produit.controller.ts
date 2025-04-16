@@ -104,3 +104,4 @@ export class ProduitController {
     return { message: `Clé "${nom}" supprimée avec succès.` };
   }
 }
+
