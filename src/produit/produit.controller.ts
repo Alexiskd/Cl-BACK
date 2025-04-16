@@ -41,7 +41,10 @@ export class ProduitController {
   }
 
   @Put('cles/update')
-  async updateKeyByName(@Query('nom') nom: string, @Body() updates: Partial<CreateKeyDto>): Promise<CatalogueCle> {
+  async updateKeyByName(
+    @Query('nom') nom: string,
+    @Body() updates: Partial<CreateKeyDto>,
+  ): Promise<CatalogueCle> {
     this.logger.log(`Requête PUT reçue pour nom: ${nom}`);
     return this.produitService.updateKeyByName(nom, updates);
   }
@@ -88,7 +91,10 @@ export class ProduitController {
   }
 
   @Get('cles/brand/:brand/index/:index')
-  async getKeyByBrandAndIndex(@Param('brand') brand: string, @Param('index') index: string): Promise<CatalogueCle> {
+  async getKeyByBrandAndIndex(
+    @Param('brand') brand: string,
+    @Param('index') index: string,
+  ): Promise<CatalogueCle> {
     return this.produitService.getKeyByBrandAndIndex(brand, parseInt(index, 10));
   }
 
@@ -98,4 +104,3 @@ export class ProduitController {
     return { message: `Clé "${nom}" supprimée avec succès.` };
   }
 }
-
