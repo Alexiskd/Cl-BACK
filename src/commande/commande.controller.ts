@@ -1,3 +1,4 @@
+// src/commande/commande.controller.ts
 import {
   Controller,
   Post,
@@ -15,7 +16,6 @@ import {
 } from '@nestjs/common';
 import { FileFieldsInterceptor } from '@nestjs/platform-express';
 import { memoryStorage } from 'multer';
-
 import { CommandeService } from './commande.service';
 import { CommandeGateway } from './commande.gateway';
 import { Commande } from './commande.entity';
@@ -42,12 +42,7 @@ export class CommandeController {
     ),
   )
   async create(
-    @UploadedFiles() files: {
-      frontPhoto?: Express.Multer.File[];
-      backPhoto?: Express.Multer.File[];
-      idCardFront?: Express.Multer.File[];
-      idCardBack?: Express.Multer.File[];
-    },
+    @UploadedFiles() files: any,
     @Body() body: any,
   ): Promise<{ numeroCommande: string }> {
     try {
