@@ -1,4 +1,3 @@
-// src/commande/commande.entity.ts
 import { Entity, Column, PrimaryGeneratedColumn, CreateDateColumn } from 'typeorm';
 
 @Entity()
@@ -76,8 +75,8 @@ export class Commande {
   quantity: number;
 
   /**
-   * Date d’enregistrement en base, utilisée comme date de commande
+   * Date d’enregistrement en base, utilisée comme date de commande.
    */
-  @CreateDateColumn({ type: 'timestamp' })
+  @CreateDateColumn({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
   createdAt: Date;
 }
