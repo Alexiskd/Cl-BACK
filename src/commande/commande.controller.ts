@@ -1,4 +1,3 @@
-// src/commande/commande.controller.ts
 import {
   Controller,
   Post,
@@ -103,7 +102,8 @@ export class CommandeController {
       );
       return { data, count };
     } catch (error) {
-      this.logger.error('⛔ Erreur sur GET /commande/paid:', error.stack || error.message);
+      this.logger.error('⛔ Erreur sur GET /commande/paid', error.stack || error.message);
+      console.error(error);
       throw new InternalServerErrorException(error.message);
     }
   }
