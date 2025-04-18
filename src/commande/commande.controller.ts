@@ -1,4 +1,3 @@
-// src/commande/commande.controller.ts
 import {
   Controller,
   Post,
@@ -19,6 +18,7 @@ import { memoryStorage } from 'multer';
 
 import { CommandeService } from './commande.service';
 import { CommandeGateway } from './commande.gateway';
+import { Commande } from './commande.entity';
 
 @Controller('commande')
 export class CommandeController {
@@ -51,18 +51,8 @@ export class CommandeController {
     @Body() body: any,
   ): Promise<{ numeroCommande: string }> {
     try {
-      this.logger.log('Body reçu : ' + JSON.stringify(body));
-
-      if (
-        body.lostCartePropriete === 'true' &&
-        (!body.domicileJustificatifPath || body.domicileJustificatifPath.trim() === '')
-      ) {
-        throw new InternalServerErrorException("Le chemin du justificatif de domicile est requis.");
-      }
-
-      const hasCartePropriete = !!(body.propertyCardNumber && body.propertyCardNumber.trim());
-
-      const commandeData: Partial<any> = {
+      const hasCartePropriete = !!(body.propertyCardNumber?.trim());
+      const commandeData: Partial<Commande> = {
         nom: body.nom,
         adressePostale: `${body.address}, ${body.postalCode}, ${body.ville}, ${body.additionalInfo}`,
         telephone: body.phone,
@@ -84,19 +74,16 @@ export class CommandeController {
         attestationPropriete: body.attestationPropriete === 'true',
         ville: body.ville || '',
       };
-
       const numeroCommande = await this.commandeService.createCommande(commandeData);
       return { numeroCommande };
     } catch (error) {
-      this.logger.error('Erreur lors de la création de la commande', error.stack);
-      throw new InternalServerErrorException('Erreur lors de la création de la commande.');
+      this.logger.error('Erreur création commande', error.stack);
+      throw new InternalServerErrorException("Erreur lors de la création de la commande.");
     }
   }
 
   @Patch('validate/:numeroCommande')
-  async validate(
-    @Param('numeroCommande') numeroCommande: string,
-  ): Promise<{ success: boolean }> {
+  async validate(@Param('numeroCommande') numeroCommande: string) {
     try {
       const success = await this.commandeService.validateCommande(numeroCommande);
       if (success) {
@@ -104,7 +91,7 @@ export class CommandeController {
       }
       return { success };
     } catch (error) {
-      this.logger.error(`Erreur validation commande ${numeroCommande}`, error.stack);
+      this.logger.error('Erreur validation commande', error.stack);
       throw new InternalServerErrorException('Erreur lors de la validation de la commande.');
     }
   }
@@ -113,7 +100,7 @@ export class CommandeController {
   async getPaidCommandes(
     @Query('page') page = '1',
     @Query('limit') limit = '20',
-  ): Promise<{ data: any[]; count: number }> {
+  ): Promise<{ data: Commande[]; count: number }> {
     try {
       const [data, count] = await this.commandeService.getPaidCommandesPaginated(
         +page,
@@ -121,15 +108,13 @@ export class CommandeController {
       );
       return { data, count };
     } catch (error) {
-      this.logger.error('Erreur récupération commandes payées', error.stack);
-      throw new InternalServerErrorException('Erreur lors de la récupération.');
+      this.logger.error('⛔ Erreur sur GET /commande/paid:', error.stack || error.message);
+      throw new InternalServerErrorException(error.message);
     }
   }
 
   @Delete('cancel/:numeroCommande')
-  async cancel(
-    @Param('numeroCommande') numeroCommande: string,
-  ): Promise<{ success: boolean }> {
+  async cancel(@Param('numeroCommande') numeroCommande: string) {
     try {
       const success = await this.commandeService.cancelCommande(numeroCommande);
       if (success) {
@@ -137,33 +122,27 @@ export class CommandeController {
       }
       return { success };
     } catch (error) {
-      this.logger.error(`Erreur annulation commande ${numeroCommande}`, error.stack);
+      this.logger.error('Erreur annulation commande', error.stack);
       throw new InternalServerErrorException("Erreur lors de l'annulation de la commande.");
     }
   }
 
   @Get(':numeroCommande')
-  async getCommande(
-    @Param('numeroCommande') numeroCommande: string,
-  ): Promise<any> {
+  async getCommande(@Param('numeroCommande') numeroCommande: string) {
     try {
       return await this.commandeService.getCommandeByNumero(numeroCommande);
     } catch (error) {
-      this.logger.error(`Erreur récupération commande ${numeroCommande}`, error.stack);
+      this.logger.error('Erreur récupération commande', error.stack);
       throw new InternalServerErrorException("Erreur lors de la récupération de la commande.");
     }
   }
 
   @Put('update/:id')
-  async updateCommande(
-    @Param('id') id: string,
-    @Body() updateData: Partial<any>,
-  ): Promise<any> {
+  async updateCommande(@Param('id') id: string, @Body() updateData: Partial<Commande>) {
     try {
-      await this.commandeService.updateCommande(id, updateData);
-      return await this.commandeService.getCommandeByNumero(id);
+      return await this.commandeService.updateCommande(id, updateData);
     } catch (error) {
-      this.logger.error(`Erreur mise à jour commande ${id}`, error.stack);
+      this.logger.error('Erreur mise à jour commande', error.stack);
       throw new InternalServerErrorException("Erreur lors de la mise à jour de la commande.");
     }
   }
