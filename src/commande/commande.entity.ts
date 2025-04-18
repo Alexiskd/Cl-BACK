@@ -1,4 +1,4 @@
-import { Entity, Column, PrimaryGeneratedColumn, CreateDateColumn } from 'typeorm';
+import { Entity, Column, PrimaryGeneratedColumn } from 'typeorm';
 
 @Entity()
 export class Commande {
@@ -32,16 +32,16 @@ export class Commande {
   @Column('simple-array')
   typeLivraison: string[];
 
-  @Column({ nullable: true, default: '' })
+  @Column({ default: '' })
   shippingMethod: string;
 
-  @Column({ nullable: true, default: '' })
+  @Column({ default: '' })
   deliveryType: string;
 
-  @Column({ type: 'text', nullable: true })
+  @Column('text', { nullable: true })
   urlPhotoRecto: string;
 
-  @Column({ type: 'text', nullable: true })
+  @Column('text', { nullable: true })
   urlPhotoVerso: string;
 
   @Column({ default: 'annuler' })
@@ -56,27 +56,21 @@ export class Commande {
   @Column({ nullable: true, default: null })
   hasCartePropriete: boolean;
 
-  @Column({ type: 'text', nullable: true })
+  @Column('text', { nullable: true })
   idCardFront: string;
 
-  @Column({ type: 'text', nullable: true })
+  @Column('text', { nullable: true })
   idCardBack: string;
 
-  @Column({ type: 'text', nullable: true })
+  @Column('text', { nullable: true })
   domicileJustificatif: string;
 
   @Column({ nullable: true, default: null })
   attestationPropriete: boolean;
 
-  @Column({ nullable: true, default: '' })
+  @Column({ default: '' })
   ville: string;
 
-  @Column({ nullable: true, default: 1 })
+  @Column({ default: 1 })
   quantity: number;
-
-  /**
-   * Date d’enregistrement en base, utilisée comme date de commande.
-   */
-  @CreateDateColumn({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
-  createdAt: Date;
 }
