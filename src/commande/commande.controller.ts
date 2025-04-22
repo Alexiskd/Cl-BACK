@@ -124,4 +124,3 @@ export class CommandeController {
     return this.commandeService.updateCommande(id, updateData);
   }
 }
-
