@@ -80,7 +80,6 @@ export class Commande {
   @Column({ default: 1 })
   quantity: number;
 
-  // date de création automatique
   @CreateDateColumn({ type: 'timestamptz', default: () => 'CURRENT_TIMESTAMP' })
   createdAt: Date;
 }
