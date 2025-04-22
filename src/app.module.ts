@@ -43,10 +43,9 @@ import { TypeOrmModule } from '@nestjs/typeorm';
     }),
 
     // Configuration de la connexion à la base de données
-    // (Les informations de connexion restent inchangées)
     TypeOrmModule.forRoot({
       type: 'postgres',
-      url: 'postgresql://cleservice_user:LUWibq2Mqj4yqZnuQgZhBGk8exqGSIvS@dpg-cuec3352ng1s7387587g-a.oregon-postgres.render.com/cleservice',
+      url: process.env.DATABASE_URL || 'postgresql://cleservice_user:LUWibq2Mqj4yqZnuQgZhBGk8exqGSIvS@dpg-cuec3352ng1s7387587g-a.oregon-postgres.render.com/cleservice',
       autoLoadEntities: true,
       synchronize: false,
       ssl: { rejectUnauthorized: false },
