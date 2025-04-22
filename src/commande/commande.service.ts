@@ -14,40 +14,25 @@ export class CommandeService {
   ) {}
 
   async createCommande(data: Partial<Commande>): Promise<string> {
-    try {
-      const numeroCommande = uuidv4();
-      const newCommande = this.commandeRepository.create({
-        ...data,
-        numeroCommande,
-        status: 'annuler',
-      });
-      await this.commandeRepository.save(newCommande);
-      return numeroCommande;
-    } catch (error) {
-      this.logger.error(
-        'Erreur lors de la sauvegarde de la commande',
-        error.stack,
-      );
-      throw error;
-    }
+    const numeroCommande = uuidv4();
+    const newCommande = this.commandeRepository.create({
+      ...data,
+      numeroCommande,
+      status: 'annuler',
+    });
+    const saved = await this.commandeRepository.save(newCommande);
+    this.logger.log(`Commande créée à ${saved.createdAt}`);
+    return numeroCommande;
   }
 
   async validateCommande(numeroCommande: string): Promise<boolean> {
-    try {
-      const commande = await this.commandeRepository.findOne({
-        where: { numeroCommande },
-      });
-      if (!commande) return false;
-      commande.status = 'payer';
-      await this.commandeRepository.save(commande);
-      return true;
-    } catch (error) {
-      this.logger.error(
-        `Erreur lors de la validation de la commande ${numeroCommande}`,
-        error.stack,
-      );
-      throw error;
-    }
+    const commande = await this.commandeRepository.findOne({
+      where: { numeroCommande },
+    });
+    if (!commande) return false;
+    commande.status = 'payer';
+    await this.commandeRepository.save(commande);
+    return true;
   }
 
   async getPaidCommandesPaginated(
@@ -56,65 +41,32 @@ export class CommandeService {
   ): Promise<[Commande[], number]> {
     return this.commandeRepository.findAndCount({
       where: { status: 'payer' },
+      order: { createdAt: 'DESC' },
       skip: (page - 1) * limit,
       take: limit,
     });
   }
 
   async cancelCommande(numeroCommande: string): Promise<boolean> {
-    try {
-      const result = await this.commandeRepository.delete({
-        numeroCommande,
-      });
-      return result.affected > 0;
-    } catch (error) {
-      this.logger.error(
-        `Erreur lors de l'annulation de la commande ${numeroCommande}`,
-        error.stack,
-      );
-      throw error;
-    }
+    const result = await this.commandeRepository.delete({
+      numeroCommande,
+    });
+    return result.affected > 0;
   }
 
   async getCommandeByNumero(
     numeroCommande: string,
   ): Promise<Commande> {
-    try {
-      const commande = await this.commandeRepository.findOne({
-        where: { numeroCommande },
-      });
-      if (!commande) {
-        throw new Error('Commande non trouvée.');
-      }
-      return commande;
-    } catch (error) {
-      this.logger.error(
-        `Erreur lors de la récupération de la commande ${numeroCommande}`,
-        error.stack,
-      );
-      throw error;
-    }
+    return await this.commandeRepository.findOneOrFail({
+      where: { numeroCommande },
+    });
   }
 
   async updateCommande(
     id: string,
     updateData: Partial<Commande>,
   ): Promise<Commande> {
-    try {
-      await this.commandeRepository.update({ id }, updateData);
-      const updatedCommande = await this.commandeRepository.findOne({
-        where: { id },
-      });
-      if (!updatedCommande) {
-        throw new Error('Commande non trouvée.');
-      }
-      return updatedCommande;
-    } catch (error) {
-      this.logger.error(
-        `Erreur lors de la mise à jour de la commande ${id}`,
-        error.stack,
-      );
-      throw error;
-    }
+    await this.commandeRepository.update({ id }, updateData);
+    return await this.commandeRepository.findOneOrFail({ where: { id } });
   }
 }
