@@ -74,7 +74,7 @@ export class Commande {
   @Column({ default: 1 })
   quantity: number;
 
-  // <-- Nouveau champ créé automatiquement à l’insertion
+  // <-- Ce champ sera renseigné automatiquement à l'insertion
   @CreateDateColumn({ type: 'timestamp with time zone' })
   createdAt: Date;
 }
