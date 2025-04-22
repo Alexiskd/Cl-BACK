@@ -8,7 +8,8 @@ import { Commande } from './commande.entity';
 @Injectable()
 export class CommandeService {
   private readonly logger = new Logger(CommandeService.name);
-  constructor(@InjectRepository(Commande) private repo: Repository<Commande>) {}
+
+  constructor(@InjectRepository(Commande) private readonly repo: Repository<Commande>) {}
 
   async createCommande(data: Partial<Commande>): Promise<string> {
     const num = uuidv4();
@@ -26,7 +27,12 @@ export class CommandeService {
   }
 
   async getPaidCommandesPaginated(page: number, limit: number): Promise<[Commande[], number]> {
-    return this.repo.findAndCount({ where: { status: 'payer' }, skip: (page-1)*limit, take: limit, order: { createdAt: 'DESC' } });
+    return this.repo.findAndCount({
+      where: { status: 'payer' },
+      skip: (page - 1) * limit,
+      take: limit,
+      order: { createdAt: 'DESC' },
+    });
   }
 
   async cancelCommande(num: string): Promise<boolean> {
@@ -36,7 +42,7 @@ export class CommandeService {
 
   async getCommandeByNumero(num: string): Promise<Commande> {
     const c = await this.repo.findOne({ where: { numeroCommande: num } });
-    if (!c) throw new Error('Non trouvée');
+    if (!c) throw new Error('Commande non trouvée');
     return c;
   }
 
