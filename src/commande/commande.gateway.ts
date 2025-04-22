@@ -1,10 +1,24 @@
 // src/commande/commande.gateway.ts
-import { WebSocketGateway, WebSocketServer, OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect } from '@nestjs/websockets';
+import {
+  WebSocketGateway,
+  WebSocketServer,
+  OnGatewayInit,
+  OnGatewayConnection,
+  OnGatewayDisconnect,
+} from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
-import { Logger} from '@nestjs/common';
+import { Logger } from '@nestjs/common';
 
-@WebSocketGateway({ cors: true })
-export class CommandeGateway implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect {
+@WebSocketGateway({
+  cors: {
+    origin: 'https://www.cleservice.com',
+    methods: ['GET', 'POST'],
+    credentials: true,
+  },
+})
+export class CommandeGateway
+  implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect
+{
   @WebSocketServer() server: Server;
   private readonly logger = new Logger(CommandeGateway.name);
 
@@ -24,5 +38,3 @@ export class CommandeGateway implements OnGatewayInit, OnGatewayConnection, OnGa
     this.server.emit('commandeUpdate', payload);
   }
 }
-
-
