@@ -90,11 +90,18 @@ export class CommandeController {
     @Query('page') page = '1',
     @Query('limit') limit = '20',
   ): Promise<{ data: Commande[]; count: number }> {
-    const [data, count] = await this.commandeService.getPaidCommandesPaginated(
-      +page,
-      +limit,
-    );
-    return { data, count };
+    try {
+      const [data, count] = await this.commandeService.getPaidCommandesPaginated(
+        +page,
+        +limit,
+      );
+      return { data, count };
+    } catch (error) {
+      this.logger.error('Erreur dans getPaid', error.stack);
+      throw new InternalServerErrorException(
+        'Erreur lors de la récupération des commandes payées.',
+      );
+    }
   }
 
   @Delete('cancel/:numeroCommande')
@@ -117,4 +124,3 @@ export class CommandeController {
     return this.commandeService.updateCommande(id, updateData);
   }
 }
-
