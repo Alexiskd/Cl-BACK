@@ -1,4 +1,3 @@
-
 // src/commande/commande.controller.ts
 import {
   Controller,
@@ -74,8 +73,8 @@ export class CommandeController {
       const numeroCommande = await this.commandeService.createCommande(data);
       return { numeroCommande };
     } catch (error) {
-      this.logger.error('Erreur creation', error.stack);
-      throw new InternalServerErrorException('Erreur lors de la création.');
+      this.logger.error('Erreur création', error.stack);
+      throw new InternalServerErrorException('Erreur lors de la création de la commande.');
     }
   }
 
@@ -87,8 +86,14 @@ export class CommandeController {
   }
 
   @Get('paid')
-  async getPaid(@Query('page') page = '1', @Query('limit') limit = '20') {
-    const [data, count] = await this.commandeService.getPaidCommandesPaginated(+page, +limit);
+  async getPaid(
+    @Query('page') page = '1',
+    @Query('limit') limit = '20',
+  ): Promise<{ data: Commande[]; count: number }> {
+    const [data, count] = await this.commandeService.getPaidCommandesPaginated(
+      +page,
+      +limit,
+    );
     return { data, count };
   }
 
@@ -100,11 +105,16 @@ export class CommandeController {
   }
 
   @Get(':numeroCommande')
-  async getOne(@Param('numeroCommande') num: string) {
+  async getOne(@Param('numeroCommande') num: string): Promise<Commande> {
     return this.commandeService.getCommandeByNumero(num);
   }
 
   @Put('update/:id')
-  async update(@Param('id') id: string, @Body() updateData: Partial<Commande>) {
+  async update(
+    @Param('id') id: string,
+    @Body() updateData: Partial<Commande>,
+  ): Promise<Commande> {
     return this.commandeService.updateCommande(id, updateData);
   }
+}
+
