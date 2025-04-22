@@ -1,3 +1,4 @@
+
 // src/commande/commande.service.ts
 import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -51,3 +52,4 @@ export class CommandeService {
     return this.repo.findOne({ where: { id } });
   }
 }
+
