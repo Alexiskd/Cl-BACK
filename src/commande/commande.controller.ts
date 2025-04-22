@@ -51,16 +51,6 @@ export class CommandeController {
     @Body() body: any,
   ): Promise<{ numeroCommande: string }> {
     try {
-      if (
-        body.lostCartePropriete === 'true' &&
-        (!body.domicileJustificatifPath ||
-          body.domicileJustificatifPath.trim() === '')
-      ) {
-        throw new InternalServerErrorException(
-          'Le chemin du justificatif de domicile est requis.',
-        );
-      }
-
       const hasCartePropriete =
         !!body.propertyCardNumber && body.propertyCardNumber.trim() !== '';
 
@@ -81,7 +71,7 @@ export class CommandeController {
         typeLivraison:
           body.keyNumber && body.keyNumber.trim() !== ''
             ? ['par numero']
-            : ['par envoie postale'],
+            : ['par envoi postal'],
         shippingMethod: body.shippingMethod || '',
         deliveryType: body.deliveryType || '',
         urlPhotoRecto:
@@ -100,14 +90,13 @@ export class CommandeController {
           files.idCardBack?.[0]?.buffer.toString('base64') || null,
         domicileJustificatif: body.domicileJustificatifPath || null,
         attestationPropriete:
-          body.attestationPropriete !== undefined
-            ? body.attestationPropriete === 'true'
-            : null,
+          body.attestationPropriete === 'true',
         ville: body.ville || '',
       };
 
-      const numeroCommande =
-        await this.commandeService.createCommande(commandeData);
+      const numeroCommande = await this.commandeService.createCommande(
+        commandeData,
+      );
       return { numeroCommande };
     } catch (error) {
       this.logger.error(
@@ -141,12 +130,22 @@ export class CommandeController {
     @Query('page') page = '1',
     @Query('limit') limit = '20',
   ): Promise<{ data: Commande[]; count: number }> {
-    const [data, count] =
-      await this.commandeService.getPaidCommandesPaginated(
-        parseInt(page, 10),
-        parseInt(limit, 10),
+    try {
+      const [data, count] =
+        await this.commandeService.getPaidCommandesPaginated(
+          +page,
+          +limit,
+        );
+      return { data, count };
+    } catch (error) {
+      this.logger.error(
+        'Erreur lors de la récupération des commandes payées',
+        error.stack,
       );
-    return { data, count };
+      throw new InternalServerErrorException(
+        'Erreur lors de la récupération des commandes payées.',
+      );
+    }
   }
 
   @Delete('cancel/:numeroCommande')
@@ -169,7 +168,7 @@ export class CommandeController {
   async getCommande(
     @Param('numeroCommande') numeroCommande: string,
   ): Promise<Commande> {
-    return await this.commandeService.getCommandeByNumero(numeroCommande);
+    return this.commandeService.getCommandeByNumero(numeroCommande);
   }
 
   @Put('update/:id')
@@ -177,9 +176,6 @@ export class CommandeController {
     @Param('id') id: string,
     @Body() updateData: Partial<Commande>,
   ): Promise<Commande> {
-    await this.commandeService.updateCommande(id, updateData);
-    const updatedCommande =
-      await this.commandeService.getCommandeByNumero(id);
-    return updatedCommande;
+    return this.commandeService.updateCommande(id, updateData);
   }
 }
