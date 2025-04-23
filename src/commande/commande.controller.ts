@@ -69,6 +69,7 @@ export class CommandeController {
         attestationPropriete: body.attestationPropriete === 'true',
         ville: body.ville || '',
         quantity: body.quantity ? parseInt(body.quantity, 10) : 1,
+        date: body
       };
       const numeroCommande = await this.commandeService.createCommande(data);
       return { numeroCommande };
