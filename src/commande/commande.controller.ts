@@ -84,7 +84,9 @@ export class CommandeController {
   @Patch('validate/:numeroCommande')
   async validate(@Param('numeroCommande') num: string) {
     const success = await this.commandeService.validateCommande(num);
-    if (success) this.commandeGateway.emitCommandeUpdate({ type: 'validate', num });
+    if (success) {
+      this.commandeGateway.emitCommandeUpdate({ type: 'validate', num });
+    }
     return { success };
   }
 
@@ -110,7 +112,9 @@ export class CommandeController {
   @Delete('cancel/:numeroCommande')
   async cancel(@Param('numeroCommande') num: string) {
     const success = await this.commandeService.cancelCommande(num);
-    if (success) this.commandeGateway.emitCommandeUpdate({ type: 'cancel', num });
+    if (success) {
+      this.commandeGateway.emitCommandeUpdate({ type: 'cancel', num });
+    }
     return { success };
   }
 
@@ -127,4 +131,3 @@ export class CommandeController {
     return this.commandeService.updateCommande(id, updateData);
   }
 }
-
