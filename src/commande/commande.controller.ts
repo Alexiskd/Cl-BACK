@@ -47,6 +47,7 @@ export class CommandeController {
   ): Promise<{ numeroCommande: string }> {
     try {
       this.logger.log('Body reçu : ' + JSON.stringify(body));
+      // Construire l'objet data sans renvoyer l'objet body complet
       const data: Partial<Commande> = {
         nom: body.nom,
         adressePostale: `${body.address}, ${body.postalCode}, ${body.ville}, ${body.additionalInfo}`,
@@ -69,8 +70,10 @@ export class CommandeController {
         attestationPropriete: body.attestationPropriete === 'true',
         ville: body.ville || '',
         quantity: body.quantity ? parseInt(body.quantity, 10) : 1,
-        date: body,
+        // On renseigne la date de création plutôt que d'envoyer tout le body
+        date: body.date || new Date().toISOString(),
       };
+
       const numeroCommande = await this.commandeService.createCommande(data);
       return { numeroCommande };
     } catch (error) {
