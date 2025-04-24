@@ -26,17 +26,23 @@ async function bootstrap() {
     'http://localhost:4173',
   ];
 
+  // Activer CORS avec validation dynamique de l'origine
   app.enableCors({
     origin: (origin, callback) => {
-      // Autoriser les requêtes sans origine (ex. Postman)
-      if (!origin) return callback(null, true);
+      // Autoriser les requêtes sans origine (ex. Postman, curl)
+      if (!origin) {
+        return callback(null, true);
+      }
       if (allowedOrigins.includes(origin)) {
-        return callback(null, origin);
+        return callback(null, true);
       } else {
-        return callback(new Error(`Origin ${origin} non autorisée par CORS`));
+        return callback(
+          new Error(`Origin ${origin} non autorisée par CORS`),
+          false,
+        );
       }
     },
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization'],
     credentials: true,
   });
@@ -51,7 +57,7 @@ async function bootstrap() {
   );
   app.useGlobalInterceptors(new LoggingInterceptor());
 
-  // Swagger (optionnel)
+  // Configuration de Swagger (optionnel)
   const config = new DocumentBuilder()
     .setTitle('API Stancer')
     .setDescription('API pour générer des pages de paiement avec Stancer')
@@ -64,4 +70,5 @@ async function bootstrap() {
   await app.listen(port, '0.0.0.0');
   logger.log(`Application running on port ${port}`);
 }
+
 bootstrap();
