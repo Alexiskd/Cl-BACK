@@ -1,3 +1,4 @@
+// src/commande/commande.entity.ts
 import { Entity, Column, PrimaryGeneratedColumn } from 'typeorm';
 
 @Entity()
@@ -74,6 +75,6 @@ export class Commande {
   @Column({ default: 1 })
   quantity: number;
 
-   @Column({ default: '' })
+  @Column({ default: '' })
   date: string;
 }
