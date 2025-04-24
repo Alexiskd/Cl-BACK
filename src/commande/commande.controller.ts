@@ -75,7 +75,9 @@ export class CommandeController {
       return { numeroCommande };
     } catch (error) {
       this.logger.error('Erreur création', error.stack);
-      throw new InternalServerErrorException('Erreur lors de la création de la commande.');
+      throw new InternalServerErrorException(
+        'Erreur lors de la création de la commande.',
+      );
     }
   }
 
