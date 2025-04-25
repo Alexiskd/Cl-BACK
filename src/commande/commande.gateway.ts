@@ -1,3 +1,4 @@
+// src/commande/commande.gateway.ts
 import {
   WebSocketGateway,
   WebSocketServer,
@@ -12,15 +13,12 @@ const allowedOrigins = [
   process.env.CORS_ORIGIN || 'http://localhost:5173',
   'https://frontendcleservice.onrender.com',
   'https://www.cleservice.com',
-  // autres origines…
 ];
 
 @WebSocketGateway({
   cors: {
     origin: (origin, callback) => {
-      if (!origin || allowedOrigins.includes(origin)) {
-        return callback(null, true);
-      }
+      if (!origin || allowedOrigins.includes(origin)) return callback(null, true);
       return callback(new Error(`Origin ${origin} non autorisée`), false);
     },
     credentials: true,
