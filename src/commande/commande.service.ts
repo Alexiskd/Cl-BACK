@@ -1,5 +1,3 @@
-// src/commande/commande.service.ts
-
 import { Injectable, InternalServerErrorException, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -68,7 +66,7 @@ export class CommandeService {
       return true;
     } catch (error) {
       this.logger.error(`Erreur annulation commande ${numeroCommande}`, error.stack);
-      throw new InternalServerErrorException("Erreur annulation commande");
+      throw new InternalServerErrorException('Erreur annulation commande');
     }
   }
 
@@ -77,7 +75,7 @@ export class CommandeService {
       return await this.commandeRepository.findOne({ where: { numeroCommande } });
     } catch (error) {
       this.logger.error(`Erreur récupération commande ${numeroCommande}`, error.stack);
-      throw new InternalServerErrorException("Erreur récupération commande");
+      throw new InternalServerErrorException('Erreur récupération commande');
     }
   }
 
@@ -90,7 +88,7 @@ export class CommandeService {
       return this.getCommandeByNumero(numeroCommande);
     } catch (error) {
       this.logger.error(`Erreur mise à jour commande ${numeroCommande}`, error.stack);
-      throw new InternalServerErrorException("Erreur mise à jour commande");
+      throw new InternalServerErrorException('Erreur mise à jour commande');
     }
   }
 }
