@@ -11,13 +11,8 @@ import { Logger } from '@nestjs/common';
 const allowedOrigins = [
   process.env.CORS_ORIGIN || 'http://localhost:5173',
   'https://frontendcleservice.onrender.com',
-  'https://frontend-fkzn.onrender.com',
-  'https://cleservice.com',
   'https://www.cleservice.com',
-  'https://2f24-90-90-24-19.ngrok-free.app',
-  'http://localhost:5174',
-  'http://localhost:5175',
-  'http://localhost:4173',
+  // autres origines…
 ];
 
 @WebSocketGateway({
@@ -28,14 +23,11 @@ const allowedOrigins = [
       }
       return callback(new Error(`Origin ${origin} non autorisée`), false);
     },
-    methods: ['GET', 'POST'],
     credentials: true,
   },
   transports: ['websocket'],
 })
-export class CommandeGateway
-  implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect
-{
+export class CommandeGateway implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect {
   @WebSocketServer() server: Server;
   private readonly logger = new Logger(CommandeGateway.name);
 
