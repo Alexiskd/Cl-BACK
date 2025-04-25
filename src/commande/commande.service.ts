@@ -112,13 +112,13 @@ export class CommandeService {
   ): Promise<Commande> {
     try {
       await this.commandeRepository.update({ id }, updateData);
-      const updatedCommande = await this.commandeRepository.findOne({
+      const updated = await this.commandeRepository.findOne({
         where: { id },
       });
-      if (!updatedCommande) {
+      if (!updated) {
         throw new Error('Commande non trouvée.');
       }
-      return updatedCommande;
+      return updated;
     } catch (error) {
       this.logger.error(
         `Erreur lors de la mise à jour de la commande ${id}`,
