@@ -39,7 +39,7 @@ export class CommandeController {
         { name: 'idCardFront', maxCount: 1 },
         { name: 'idCardBack', maxCount: 1 },
       ],
-      { storage: memoryStorage() }
+      { storage: memoryStorage() },
     ),
   )
   async create(
@@ -140,7 +140,7 @@ export class CommandeController {
 
   /**
    * GET /commande/paid
-   * Ne renvoie plus de 500 : si une erreur se produit,
+   * Ne renvoie plus de 500 : si une erreur survient,
    * on renvoie un 200 avec data=[] et count=0.
    */
   @Get('paid')
@@ -225,10 +225,6 @@ export class CommandeController {
       throw new InternalServerErrorException(
         "Erreur lors de la mise à jour de la commande.",
       );
-    }
-  }
-}
-
     }
   }
 }
