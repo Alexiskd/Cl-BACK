@@ -155,7 +155,7 @@ export class CommandeController {
       );
       return { data, count };
     } catch (error) {
-      // Debug: renvoyer l'erreur brute pour identifier la cause du 500
+      // DEBUG ONLY: renvoyer l'erreur brute pour identifier la cause du 500
       return {
         status: 500,
         error: error.name,
