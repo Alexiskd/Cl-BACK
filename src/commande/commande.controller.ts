@@ -43,7 +43,8 @@ export class CommandeController {
     ),
   )
   async create(
-    @UploadedFiles() files: {
+    @UploadedFiles()
+    files: {
       frontPhoto?: Express.Multer.File[];
       backPhoto?: Express.Multer.File[];
       idCardFront?: Express.Multer.File[];
@@ -56,9 +57,12 @@ export class CommandeController {
 
       if (
         body.lostCartePropriete === 'true' &&
-        (!body.domicileJustificatifPath || body.domicileJustificatifPath.trim() === '')
+        (!body.domicileJustificatifPath ||
+          body.domicileJustificatifPath.trim() === '')
       ) {
-        throw new InternalServerErrorException("Le chemin du justificatif de domicile est requis.");
+        throw new InternalServerErrorException(
+          'Le chemin du justificatif de domicile est requis.',
+        );
       }
 
       const hasCartePropriete =
@@ -135,8 +139,9 @@ export class CommandeController {
   }
 
   /**
+   * GET /commande/paid
    * Renvoie TOUJOURS 200, même en cas d’erreur,
-   * et fournit une liste vide/count à 0 en fallback.
+   * et fournit une liste vide/count = 0 en fallback.
    */
   @Get('paid')
   async getPaidCommandes(
@@ -155,7 +160,7 @@ export class CommandeController {
         'Erreur récupération commandes payées',
         error.stack,
       );
-      // Retourne un 200 propre, sans planter le front
+      // Pour éviter le 500 : on renvoie simplement un tableau vide
       return { data: [], count: 0 };
     }
   }
