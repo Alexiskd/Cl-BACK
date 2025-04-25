@@ -1,75 +1,65 @@
-import { NestFactory } from '@nestjs/core';
-import { AppModule } from './app.module';
-import { ValidationPipe, Logger } from '@nestjs/common';
-import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
-import { LoggingInterceptor } from './logging.interceptor';
-import { json, urlencoded } from 'express';
+// src/commande/commande.gateway.ts
 
-async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
-  const logger = new Logger('Bootstrap');
+import {
+  WebSocketGateway,
+  WebSocketServer,
+  OnGatewayInit,
+  OnGatewayConnection,
+  OnGatewayDisconnect,
+} from '@nestjs/websockets';
+import { Server, Socket } from 'socket.io';
+import { Logger } from '@nestjs/common';
 
-  // Limiter la taille des requêtes
-  app.use(json({ limit: '10mb' }));
-  app.use(urlencoded({ limit: '10mb', extended: true }));
+// Reprenez ici votre liste d’origines autorisées depuis main.ts
+const allowedOrigins = [
+  process.env.CORS_ORIGIN || 'http://localhost:5173',
+  'https://frontendcleservice.onrender.com',
+  'https://frontend-fkzn.onrender.com',
+  'https://cleservice.com',
+  'https://www.cleservice.com',
+  'https://2f24-90-90-24-19.ngrok-free.app',
+  'http://localhost:5174',
+  'http://localhost:5175',
+  'http://localhost:4173',
+];
 
-  // Liste des origines autorisées
-  const allowedOrigins = [
-    process.env.CORS_ORIGIN || 'http://localhost:5173',
-    'https://frontendcleservice.onrender.com',
-    'https://frontend-fkzn.onrender.com',
-    'https://cleservice.com',
-    'https://www.cleservice.com',
-    'https://2f24-90-90-24-19.ngrok-free.app',
-    'http://localhost:5174',
-    'http://localhost:5175',
-    'http://localhost:4173',
-  ];
-
-  // Activer CORS avec validation dynamique de l'origine
-  app.enableCors({
+@WebSocketGateway({
+  // CORS côté Socket.IO
+  cors: {
     origin: (origin, callback) => {
-      // Autoriser les requêtes sans origine (ex. Postman, curl)
-      if (!origin) {
+      // Autoriser Postman/cURL (sans origine) et vos domaines
+      if (!origin || allowedOrigins.includes(origin)) {
         return callback(null, true);
       }
-      if (allowedOrigins.includes(origin)) {
-        return callback(null, true);
-      } else {
-        return callback(
-          new Error(`Origin ${origin} non autorisée par CORS`),
-          false,
-        );
-      }
+      return callback(
+        new Error(`Origin ${origin} non autorisée par CORS`),
+        false,
+      );
     },
-    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization'],
     credentials: true,
-  });
+  },
+  // Forcer le transport WebSocket (évite les erreurs 502 sur le polling)
+  transports: ['websocket'],
+})
+export class CommandeGateway
+  implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect
+{
+  @WebSocketServer() server: Server;
+  private logger: Logger = new Logger('CommandeGateway');
 
-  // Validation globale et intercepteur de logging
-  app.useGlobalPipes(
-    new ValidationPipe({
-      whitelist: true,
-      forbidNonWhitelisted: true,
-      transform: true,
-    }),
-  );
-  app.useGlobalInterceptors(new LoggingInterceptor());
+  afterInit(server: Server) {
+    this.logger.log('WebSocket initialisé');
+  }
 
-  // Configuration de Swagger (optionnel)
-  const config = new DocumentBuilder()
-    .setTitle('API Stancer')
-    .setDescription('API pour générer des pages de paiement avec Stancer')
-    .setVersion('1.0')
-    .build();
-  const document = SwaggerModule.createDocument(app, config);
-  SwaggerModule.setup('api', app, document);
+  handleConnection(client: Socket) {
+    this.logger.log(`Client connecté: ${client.id}`);
+  }
 
-  const port = process.env.PORT || 3000;
-  await app.listen(port, '0.0.0.0');
-  logger.log(`Application running on port ${port}`);
+  handleDisconnect(client: Socket) {
+    this.logger.log(`Client déconnecté: ${client.id}`);
+  }
+
+  emitCommandeUpdate(payload: any) {
+    this.server.emit('commandeUpdate', payload);
+  }
 }
-
-bootstrap();
-
