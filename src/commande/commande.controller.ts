@@ -58,7 +58,7 @@ export class CommandeController {
         (!body.domicileJustificatifPath || !body.domicileJustificatifPath.trim())
       ) {
         throw new InternalServerErrorException(
-          "Le chemin du justificatif de domicile est requis.",
+          "Le chemin du justificatif de domicile est requis."
         );
       }
 
@@ -108,7 +108,7 @@ export class CommandeController {
         error.stack,
       );
       throw new InternalServerErrorException(
-        `Erreur lors de la création de la commande : ${error.message}`,
+        `Erreur lors de la création de la commande : ${error.message}`
       );
     }
   }
@@ -119,7 +119,7 @@ export class CommandeController {
   ): Promise<{ success: boolean }> {
     try {
       const success = await this.commandeService.validateCommande(
-        numeroCommande,
+        numeroCommande
       );
       if (success) {
         this.commandeGateway.emitCommandeUpdate({
@@ -134,7 +134,7 @@ export class CommandeController {
         error.stack,
       );
       throw new InternalServerErrorException(
-        'Erreur lors de la validation de la commande.',
+        'Erreur lors de la validation de la commande.'
       );
     }
   }
@@ -146,7 +146,7 @@ export class CommandeController {
   ): Promise<{ data: any[]; count: number }> {
     try {
       this.logger.log(
-        `Récupération commandes payées (page=${page},limit=${limit})`,
+        `Récupération commandes payées (page=${page},limit=${limit})`
       );
       const [data, count] = await this.commandeService.getPaidCommandesPaginated(
         +page,
@@ -160,7 +160,7 @@ export class CommandeController {
         error.stack,
       );
       throw new InternalServerErrorException(
-        `Erreur lors de la récupération des commandes payées : ${error.message}`,
+        `Erreur lors de la récupération des commandes payées : ${error.message}`
       );
     }
   }
@@ -171,7 +171,7 @@ export class CommandeController {
   ): Promise<{ success: boolean }> {
     try {
       const success = await this.commandeService.cancelCommande(
-        numeroCommande,
+        numeroCommande
       );
       if (success) {
         this.commandeGateway.emitCommandeUpdate({
@@ -186,7 +186,7 @@ export class CommandeController {
         error.stack,
       );
       throw new InternalServerErrorException(
-        "Erreur lors de l'annulation de la commande.",
+        "Erreur lors de l'annulation de la commande."
       );
     }
   }
@@ -197,7 +197,7 @@ export class CommandeController {
   ): Promise<any> {
     try {
       return await this.commandeService.getCommandeByNumero(
-        numeroCommande,
+        numeroCommande
       );
     } catch (error) {
       this.logger.error(
@@ -205,7 +205,7 @@ export class CommandeController {
         error.stack,
       );
       throw new InternalServerErrorException(
-        "Erreur lors de la récupération de la commande.",
+        "Erreur lors de la récupération de la commande."
       );
     }
   }
@@ -224,10 +224,8 @@ export class CommandeController {
         error.stack,
       );
       throw new InternalServerErrorException(
-        "Erreur lors de la mise à jour de la commande.",
+        "Erreur lors de la mise à jour de la commande."
       );
     }
   }
 }
-
-
