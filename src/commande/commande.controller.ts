@@ -1,4 +1,5 @@
 // src/commande/commande.controller.ts
+
 import {
   Controller,
   Post,
@@ -19,6 +20,7 @@ import { memoryStorage } from 'multer';
 
 import { CommandeService } from './commande.service';
 import { CommandeGateway } from './commande.gateway';
+import { Commande } from './commande.entity';
 
 @Controller('commande')
 export class CommandeController {
@@ -49,7 +51,7 @@ export class CommandeController {
       idCardBack?: Express.Multer.File[];
     },
     @Body() body: any,
-  ): Promise<{ numeroCommande: string }> {
+  ): Promise<{ numeroCommande: string; dateCommande: Date }> {
     try {
       this.logger.log('Body reçu : ' + JSON.stringify(body));
 
@@ -62,7 +64,7 @@ export class CommandeController {
 
       const hasCartePropriete = !!(body.propertyCardNumber && body.propertyCardNumber.trim());
 
-      const commandeData: Partial<any> = {
+      const commandeData: Partial<Commande> = {
         nom: body.nom,
         adressePostale: `${body.address}, ${body.postalCode}, ${body.ville}, ${body.additionalInfo}`,
         telephone: body.phone,
@@ -85,8 +87,13 @@ export class CommandeController {
         ville: body.ville || '',
       };
 
-      const numeroCommande = await this.commandeService.createCommande(commandeData);
-      return { numeroCommande };
+      // on récupère maintenant l'entité complète, dateCommande incluse
+      const newCmd = await this.commandeService.createCommande(commandeData);
+
+      return {
+        numeroCommande: newCmd.numeroCommande,
+        dateCommande: newCmd.dateCommande,
+      };
     } catch (error) {
       this.logger.error('Erreur lors de la création de la commande', error.stack);
       throw new InternalServerErrorException('Erreur lors de la création de la commande.');
@@ -113,7 +120,7 @@ export class CommandeController {
   async getPaidCommandes(
     @Query('page') page = '1',
     @Query('limit') limit = '20',
-  ): Promise<{ data: any[]; count: number }> {
+  ): Promise<{ data: Commande[]; count: number }> {
     try {
       const [data, count] = await this.commandeService.getPaidCommandesPaginated(
         +page,
@@ -145,7 +152,7 @@ export class CommandeController {
   @Get(':numeroCommande')
   async getCommande(
     @Param('numeroCommande') numeroCommande: string,
-  ): Promise<any> {
+  ): Promise<Commande> {
     try {
       return await this.commandeService.getCommandeByNumero(numeroCommande);
     } catch (error) {
@@ -157,8 +164,8 @@ export class CommandeController {
   @Put('update/:id')
   async updateCommande(
     @Param('id') id: string,
-    @Body() updateData: Partial<any>,
-  ): Promise<any> {
+    @Body() updateData: Partial<Commande>,
+  ): Promise<Commande> {
     try {
       await this.commandeService.updateCommande(id, updateData);
       return await this.commandeService.getCommandeByNumero(id);
