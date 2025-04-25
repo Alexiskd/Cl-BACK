@@ -80,3 +80,4 @@ export class CommandeService {
     return this.commandeRepository.update({ id }, updateData);
   }
 }
+
