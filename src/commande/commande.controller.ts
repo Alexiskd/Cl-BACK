@@ -140,8 +140,8 @@ export class CommandeController {
 
   /**
    * GET /commande/paid
-   * Renvoie TOUJOURS 200, même en cas d’erreur,
-   * et fournit une liste vide/count = 0 en fallback.
+   * Ne renvoie plus de 500 : si une erreur se produit,
+   * on renvoie un 200 avec data=[] et count=0.
    */
   @Get('paid')
   async getPaidCommandes(
@@ -160,7 +160,6 @@ export class CommandeController {
         'Erreur récupération commandes payées',
         error.stack,
       );
-      // Pour éviter le 500 : on renvoie simplement un tableau vide
       return { data: [], count: 0 };
     }
   }
@@ -226,6 +225,10 @@ export class CommandeController {
       throw new InternalServerErrorException(
         "Erreur lors de la mise à jour de la commande.",
       );
+    }
+  }
+}
+
     }
   }
 }
