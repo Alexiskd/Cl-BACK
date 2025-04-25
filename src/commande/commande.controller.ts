@@ -54,7 +54,6 @@ export class CommandeController {
     try {
       this.logger.log(`Body reçu : ${JSON.stringify(body)}`);
 
-      // Validation du justificatif de domicile
       if (
         body.lostCartePropriete === 'true' &&
         !body.domicileJustificatifPath?.trim()
@@ -118,7 +117,6 @@ export class CommandeController {
     @Query('limit') limit = '20',
   ) {
     try {
-      // Utilisation de QueryBuilder pour ordonner sur dateCommande sans erreur TS
       const [data, count] = await this.commandeService.getPaidCommandesPaginated(
         +page,
         +limit,
@@ -134,65 +132,65 @@ export class CommandeController {
           statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
           error: 'GetPaidCommandesError',
           message: error.message,
-          stack: error.stack?.split('\n').slice(0, 5),
         },
         HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }
   }
 
-  // ... autres routes inchangées (validate, cancel, get, update)
-}
-
-
-// src/commande/commande.service.ts
-import { Injectable, InternalServerErrorException, Logger } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { Commande } from './commande.entity';
-
-@Injectable()
-export class CommandeService {
-  private readonly logger = new Logger(CommandeService.name);
-
-  constructor(
-    @InjectRepository(Commande)
-    private readonly commandeRepository: Repository<Commande>,
-  ) {}
-
-  async createCommande(data: Partial<Commande>): Promise<Commande> {
+  @Patch('validate/:numeroCommande')
+  async validate(@Param('numeroCommande') numeroCommande: string) {
     try {
-      const cmd = this.commandeRepository.create(data);
-      return await this.commandeRepository.save(cmd);
+      const success = await this.commandeService.validateCommande(numeroCommande);
+      if (success) {
+        this.commandeGateway.emitCommandeUpdate({ type: 'validate', numeroCommande });
+      }
+      return { success };
     } catch (error) {
-      this.logger.error('Erreur création commande', error.stack);
-      throw new InternalServerErrorException('Erreur création commande');
+      this.logger.error(`Erreur validation commande ${numeroCommande}`, error.stack);
+      throw new InternalServerErrorException('Erreur validation commande.');
     }
   }
 
-  async getPaidCommandesPaginated(
-    page: number,
-    limit: number,
-  ): Promise<[Commande[], number]> {
+  @Delete('cancel/:numeroCommande')
+  async cancel(@Param('numeroCommande') numeroCommande: string) {
     try {
-      // QueryBuilder pour éviter l'erreur de type sur order
-      return await this.commandeRepository
-        .createQueryBuilder('commande')
-        .where('commande.status = :status', { status: 'paid' })
-        .orderBy('commande.dateCommande', 'DESC')
-        .skip((page - 1) * limit)
-        .take(limit)
-        .getManyAndCount();
+      const success = await this.commandeService.cancelCommande(numeroCommande);
+      if (success) {
+        this.commandeGateway.emitCommandeUpdate({ type: 'cancel', numeroCommande });
+      }
+      return { success };
     } catch (error) {
-      this.logger.error(
-        `getPaidCommandesPaginated failed (page=${page}, limit=${limit})`,
-        error.stack,
-      );
-      throw new InternalServerErrorException(
-        `Erreur récupération commandes payées : ${error.message}`,
-      );
+      this.logger.error(`Erreur annulation commande ${numeroCommande}`, error.stack);
+      throw new InternalServerErrorException('Erreur annulation commande.');
     }
   }
 
-  // ... autres méthodes inchangées (validate, cancel, getByNumero, update)
+  @Get(':numeroCommande')
+  async getCommande(@Param('numeroCommande') numeroCommande: string) {
+    try {
+      return await this.commandeService.getCommandeByNumero(numeroCommande);
+    } catch (error) {
+      this.logger.error(`Erreur récupération commande ${numeroCommande}`, error.stack);
+      throw new InternalServerErrorException('Erreur récupération commande.');
+    }
+  }
+
+  @Put('update/:numeroCommande')
+  async updateCommande(
+    @Param('numeroCommande') numeroCommande: string,
+    @Body() updateData: Partial<any>,
+  ) {
+    try {
+      const updated = await this.commandeService.updateCommande(
+        numeroCommande,
+        updateData,
+      );
+      this.commandeGateway.emitCommandeUpdate({ type: 'update', numeroCommande });
+      return updated;
+    } catch (error) {
+      this.logger.error(`Erreur mise à jour commande ${numeroCommande}`, error.stack);
+      throw new InternalServerErrorException('Erreur mise à jour commande.');
+    }
+  }
 }
