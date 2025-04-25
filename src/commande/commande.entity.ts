@@ -1,4 +1,4 @@
-import { Entity, Column, PrimaryGeneratedColumn } from 'typeorm';
+import { Entity, Column, PrimaryGeneratedColumn, CreateDateColumn } from 'typeorm';
 
 @Entity()
 export class Commande {
@@ -71,6 +71,14 @@ export class Commande {
   @Column({ default: '' })
   ville: string;
 
+  /**
+   * Date à laquelle la commande a été créée.
+   * Peuplement automatique par TypeORM lors de l'insertion.
+   */
+  @CreateDateColumn({ type: 'timestamp' })
+  dateCommande: Date;
+
   @Column({ default: 1 })
   quantity: number;
 }
+
