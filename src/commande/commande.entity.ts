@@ -1,3 +1,6 @@
+
+
+// src/commande/commande.entity.ts
 import {
   Entity,
   Column,
@@ -55,10 +58,10 @@ export class Commande {
   @Column('decimal', { precision: 10, scale: 2, default: 0 })
   prix: number;
 
-  @Column({ nullable: true, default: null })
+  @Column({ nullable: true })
   isCleAPasse: boolean;
 
-  @Column({ nullable: true, default: null })
+  @Column({ nullable: true })
   hasCartePropriete: boolean;
 
   @Column('text', { nullable: true })
@@ -70,13 +73,13 @@ export class Commande {
   @Column('text', { nullable: true })
   domicileJustificatif: string;
 
-  @Column({ nullable: true, default: null })
+  @Column({ nullable: true })
   attestationPropriete: boolean;
 
   @Column({ default: '' })
   ville: string;
 
-  @CreateDateColumn({ type: 'timestamp' })
+  @CreateDateColumn({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
   dateCommande: Date;
 
   @Column({ default: 1 })
