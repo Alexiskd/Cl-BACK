@@ -1,11 +1,4 @@
-
-// src/commande/commande.entity.ts
-import {
-  Entity,
-  Column,
-  PrimaryGeneratedColumn,
-  CreateDateColumn,
-} from 'typeorm';
+import { Entity, Column, PrimaryGeneratedColumn } from 'typeorm';
 
 @Entity()
 export class Commande {
@@ -57,10 +50,10 @@ export class Commande {
   @Column('decimal', { precision: 10, scale: 2, default: 0 })
   prix: number;
 
-  @Column({ nullable: true })
+  @Column({ nullable: true, default: null })
   isCleAPasse: boolean;
 
-  @Column({ nullable: true })
+  @Column({ nullable: true, default: null })
   hasCartePropriete: boolean;
 
   @Column('text', { nullable: true })
@@ -72,14 +65,11 @@ export class Commande {
   @Column('text', { nullable: true })
   domicileJustificatif: string;
 
-  @Column({ nullable: true })
+  @Column({ nullable: true, default: null })
   attestationPropriete: boolean;
 
   @Column({ default: '' })
   ville: string;
-
-  @CreateDateColumn({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
-  dateCommande: Date;
 
   @Column({ default: 1 })
   quantity: number;
