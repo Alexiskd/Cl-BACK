@@ -78,7 +78,7 @@ export class Commande {
   @Column({ default: '' })
   ville: string;
 
-  // ← NOUVELLE COLONNE dateCommande
+  // ← colonne créée automatiquement à l’enregistrement
   @CreateDateColumn({ type: 'timestamp' })
   dateCommande: Date;
 
