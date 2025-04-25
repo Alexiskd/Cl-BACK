@@ -1,123 +1,82 @@
 // src/commande/commande.service.ts
 
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { v4 as uuidv4 } from 'uuid';
+import { Repository, UpdateResult } from 'typeorm';
 import { Commande } from './commande.entity';
 
 @Injectable()
 export class CommandeService {
-  private readonly logger = new Logger(CommandeService.name);
-
   constructor(
     @InjectRepository(Commande)
     private readonly commandeRepository: Repository<Commande>,
   ) {}
 
-  async createCommande(data: Partial<Commande>): Promise<string> {
+  /**
+   * Crée une nouvelle commande et renvoie l'entité complète (dont dateCommande).
+   */
+  async createCommande(data: Partial<Commande>): Promise<Commande> {
     try {
-      const numeroCommande = uuidv4();
-      const newCommande = this.commandeRepository.create({
-        ...data,
-        numeroCommande,
-        status: 'annuler',
-      });
-      await this.commandeRepository.save(newCommande);
-      return numeroCommande;
+      const cmd = this.commandeRepository.create(data);
+      return await this.commandeRepository.save(cmd);
     } catch (error) {
-      this.logger.error(
-        'Erreur lors de la sauvegarde de la commande',
-        error.stack,
-      );
-      throw error;
+      throw new InternalServerErrorException('Erreur lors de la création de la commande');
     }
   }
 
+  /**
+   * Passe le statut de la commande à "validé".
+   */
   async validateCommande(numeroCommande: string): Promise<boolean> {
-    try {
-      const commande = await this.commandeRepository.findOne({
-        where: { numeroCommande },
-      });
-      if (!commande) return false;
-      commande.status = 'payer';
-      await this.commandeRepository.save(commande);
-      return true;
-    } catch (error) {
-      this.logger.error(
-        `Erreur lors de la validation de la commande ${numeroCommande}`,
-        error.stack,
-      );
-      throw error;
-    }
+    const result: UpdateResult = await this.commandeRepository.update(
+      { numeroCommande },
+      { status: 'validé' },
+    );
+    return result.affected > 0;
   }
 
+  /**
+   * Récupère les commandes payées paginées.
+   */
   async getPaidCommandesPaginated(
     page: number,
     limit: number,
   ): Promise<[Commande[], number]> {
     return this.commandeRepository.findAndCount({
-      where: { status: 'payer' },
+      where: { status: 'payé' },
       skip: (page - 1) * limit,
       take: limit,
+      order: { dateCommande: 'DESC' },  // optionnel : trier par date de commande
     });
   }
 
+  /**
+   * Passe le statut de la commande à "annulé".
+   */
   async cancelCommande(numeroCommande: string): Promise<boolean> {
-    try {
-      const result = await this.commandeRepository.delete({
-        numeroCommande,
-      });
-      return result.affected > 0;
-    } catch (error) {
-      this.logger.error(
-        `Erreur lors de l'annulation de la commande ${numeroCommande}`,
-        error.stack,
-      );
-      throw error;
-    }
+    const result: UpdateResult = await this.commandeRepository.update(
+      { numeroCommande },
+      { status: 'annulé' },
+    );
+    return result.affected > 0;
   }
 
-  async getCommandeByNumero(
-    numeroCommande: string,
-  ): Promise<Commande> {
-    try {
-      const commande = await this.commandeRepository.findOne({
-        where: { numeroCommande },
-      });
-      if (!commande) {
-        throw new Error('Commande non trouvée.');
-      }
-      return commande;
-    } catch (error) {
-      this.logger.error(
-        `Erreur lors de la récupération de la commande ${numeroCommande}`,
-        error.stack,
-      );
-      throw error;
-    }
+  /**
+   * Récupère une commande par son numéro (renvoie l'entité complète).
+   */
+  async getCommandeByNumero(numeroCommande: string): Promise<Commande> {
+    return this.commandeRepository.findOneOrFail({
+      where: { numeroCommande },
+    });
   }
 
+  /**
+   * Met à jour une commande par son id interne.
+   */
   async updateCommande(
     id: string,
     updateData: Partial<Commande>,
-  ): Promise<Commande> {
-    try {
-      await this.commandeRepository.update({ id }, updateData);
-      const updatedCommande = await this.commandeRepository.findOne({
-        where: { id },
-      });
-      if (!updatedCommande) {
-        throw new Error('Commande non trouvée.');
-      }
-      return updatedCommande;
-    } catch (error) {
-      this.logger.error(
-        `Erreur lors de la mise à jour de la commande ${id}`,
-        error.stack,
-      );
-      throw error;
-    }
+  ): Promise<UpdateResult> {
+    return this.commandeRepository.update({ id }, updateData);
   }
 }
-
