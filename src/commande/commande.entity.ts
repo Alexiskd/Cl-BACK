@@ -1,5 +1,3 @@
-// src/commande/commande.entity.ts
-
 import {
   Entity,
   Column,
@@ -78,7 +76,6 @@ export class Commande {
   @Column({ default: '' })
   ville: string;
 
-  // ← colonne créée automatiquement à l’enregistrement
   @CreateDateColumn({ type: 'timestamp' })
   dateCommande: Date;
 
