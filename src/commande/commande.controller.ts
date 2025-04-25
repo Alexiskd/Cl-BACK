@@ -42,7 +42,8 @@ export class CommandeController {
     ),
   )
   async create(
-    @UploadedFiles() files: {
+    @UploadedFiles()
+    files: {
       frontPhoto?: Express.Multer.File[];
       backPhoto?: Express.Multer.File[];
       idCardFront?: Express.Multer.File[];
@@ -58,7 +59,7 @@ export class CommandeController {
         (!body.domicileJustificatifPath || !body.domicileJustificatifPath.trim())
       ) {
         throw new InternalServerErrorException(
-          "Le chemin du justificatif de domicile est requis."
+          "Le chemin du justificatif de domicile est requis.",
         );
       }
 
@@ -108,7 +109,7 @@ export class CommandeController {
         error.stack,
       );
       throw new InternalServerErrorException(
-        `Erreur lors de la création de la commande : ${error.message}`
+        `Erreur lors de la création de la commande : ${error.message}`,
       );
     }
   }
@@ -119,7 +120,7 @@ export class CommandeController {
   ): Promise<{ success: boolean }> {
     try {
       const success = await this.commandeService.validateCommande(
-        numeroCommande
+        numeroCommande,
       );
       if (success) {
         this.commandeGateway.emitCommandeUpdate({
@@ -134,7 +135,7 @@ export class CommandeController {
         error.stack,
       );
       throw new InternalServerErrorException(
-        'Erreur lors de la validation de la commande.'
+        'Erreur lors de la validation de la commande.',
       );
     }
   }
@@ -143,25 +144,24 @@ export class CommandeController {
   async getPaidCommandes(
     @Query('page') page = '1',
     @Query('limit') limit = '20',
-  ): Promise<{ data: any[]; count: number }> {
+  ): Promise<any> {
     try {
       this.logger.log(
-        `Récupération commandes payées (page=${page},limit=${limit})`
+        `Récupération commandes payées (page=${page}, limit=${limit})`,
       );
       const [data, count] = await this.commandeService.getPaidCommandesPaginated(
         +page,
         +limit,
       );
-      this.logger.log(`OK – found ${count} commandes`);
       return { data, count };
     } catch (error) {
-      this.logger.error(
-        `Erreur récupération commandes payées: ${error.message}`,
-        error.stack,
-      );
-      throw new InternalServerErrorException(
-        `Erreur lors de la récupération des commandes payées : ${error.message}`
-      );
+      // Debug: renvoyer l'erreur brute pour identifier la cause du 500
+      return {
+        status: 500,
+        error: error.name,
+        message: error.message,
+        stack: error.stack?.split('\n').slice(0, 5),
+      };
     }
   }
 
@@ -171,7 +171,7 @@ export class CommandeController {
   ): Promise<{ success: boolean }> {
     try {
       const success = await this.commandeService.cancelCommande(
-        numeroCommande
+        numeroCommande,
       );
       if (success) {
         this.commandeGateway.emitCommandeUpdate({
@@ -186,7 +186,7 @@ export class CommandeController {
         error.stack,
       );
       throw new InternalServerErrorException(
-        "Erreur lors de l'annulation de la commande."
+        "Erreur lors de l'annulation de la commande.",
       );
     }
   }
@@ -197,7 +197,7 @@ export class CommandeController {
   ): Promise<any> {
     try {
       return await this.commandeService.getCommandeByNumero(
-        numeroCommande
+        numeroCommande,
       );
     } catch (error) {
       this.logger.error(
@@ -205,7 +205,7 @@ export class CommandeController {
         error.stack,
       );
       throw new InternalServerErrorException(
-        "Erreur lors de la récupération de la commande."
+        "Erreur lors de la récupération de la commande.",
       );
     }
   }
@@ -224,7 +224,7 @@ export class CommandeController {
         error.stack,
       );
       throw new InternalServerErrorException(
-        "Erreur lors de la mise à jour de la commande."
+        "Erreur lors de la mise à jour de la commande.",
       );
     }
   }
