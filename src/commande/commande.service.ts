@@ -1,3 +1,5 @@
+
+// src/commande/commande.service.ts
 import { Injectable, InternalServerErrorException, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -72,7 +74,9 @@ export class CommandeService {
 
   async getCommandeByNumero(numeroCommande: string): Promise<Commande> {
     try {
-      return await this.commandeRepository.findOne({ where: { numeroCommande } });
+      const cmd = await this.commandeRepository.findOne({ where: { numeroCommande } });
+      if (!cmd) throw new InternalServerErrorException('Commande non trouvée');
+      return cmd;
     } catch (error) {
       this.logger.error(`Erreur récupération commande ${numeroCommande}`, error.stack);
       throw new InternalServerErrorException('Erreur récupération commande');
@@ -92,3 +96,4 @@ export class CommandeService {
     }
   }
 }
+
