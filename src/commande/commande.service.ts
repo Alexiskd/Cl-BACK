@@ -15,7 +15,6 @@ export class CommandeService {
     private readonly commandeRepository: Repository<Commande>,
   ) {}
 
-  /** Crée une nouvelle commande et retourne son UUID */
   async createCommande(data: Partial<Commande>): Promise<string> {
     try {
       const numeroCommande = uuidv4();
@@ -27,78 +26,98 @@ export class CommandeService {
       await this.commandeRepository.save(newCommande);
       return numeroCommande;
     } catch (error) {
-      this.logger.error('Erreur lors de la création de la commande', error.stack);
+      this.logger.error(
+        'Erreur lors de la sauvegarde de la commande',
+        error.stack,
+      );
       throw error;
     }
   }
 
-  /** Passe le statut de la commande à "payer" */
   async validateCommande(numeroCommande: string): Promise<boolean> {
     try {
-      const commande = await this.commandeRepository.findOne({ where: { numeroCommande } });
+      const commande = await this.commandeRepository.findOne({
+        where: { numeroCommande },
+      });
       if (!commande) return false;
       commande.status = 'payer';
       await this.commandeRepository.save(commande);
       return true;
     } catch (error) {
-      this.logger.error(`Erreur lors de la validation de la commande ${numeroCommande}`, error.stack);
+      this.logger.error(
+        `Erreur lors de la validation de la commande ${numeroCommande}`,
+        error.stack,
+      );
       throw error;
     }
   }
 
-  /** Récupère paginé les commandes payées */
   async getPaidCommandesPaginated(
     page: number,
     limit: number,
   ): Promise<[Commande[], number]> {
-    try {
-      return await this.commandeRepository.findAndCount({
-        where: { status: 'payer' },
-        skip: (page - 1) * limit,
-        take: limit,
-      });
-    } catch (error) {
-      this.logger.error('Erreur lors de la récupération paginée des commandes payées', error.stack);
-      throw error;
-    }
+    return this.commandeRepository.findAndCount({
+      where: { status: 'payer' },
+      skip: (page - 1) * limit,
+      take: limit,
+    });
   }
 
-  /** Annule (supprime) une commande par son numéro */
   async cancelCommande(numeroCommande: string): Promise<boolean> {
     try {
-      const result = await this.commandeRepository.delete({ numeroCommande });
+      const result = await this.commandeRepository.delete({
+        numeroCommande,
+      });
       return result.affected > 0;
     } catch (error) {
-      this.logger.error(`Erreur lors de l'annulation de la commande ${numeroCommande}`, error.stack);
+      this.logger.error(
+        `Erreur lors de l'annulation de la commande ${numeroCommande}`,
+        error.stack,
+      );
       throw error;
     }
   }
 
-  /** Récupère une commande via son numéro */
-  async getCommandeByNumero(numeroCommande: string): Promise<Commande> {
+  async getCommandeByNumero(
+    numeroCommande: string,
+  ): Promise<Commande> {
     try {
-      const commande = await this.commandeRepository.findOne({ where: { numeroCommande } });
-      if (!commande) throw new Error('Commande non trouvée.');
+      const commande = await this.commandeRepository.findOne({
+        where: { numeroCommande },
+      });
+      if (!commande) {
+        throw new Error('Commande non trouvée.');
+      }
       return commande;
     } catch (error) {
-      this.logger.error(`Erreur lors de la récupération de la commande ${numeroCommande}`, error.stack);
+      this.logger.error(
+        `Erreur lors de la récupération de la commande ${numeroCommande}`,
+        error.stack,
+      );
       throw error;
     }
   }
 
-  /** Met à jour partiellement une commande et renvoie l’entité mise à jour */
   async updateCommande(
     id: string,
     updateData: Partial<Commande>,
   ): Promise<Commande> {
     try {
       await this.commandeRepository.update({ id }, updateData);
-      const updated = await this.commandeRepository.findOne({ where: { id } });
-      if (!updated) throw new Error('Commande non trouvée.');
-      return updated;
+      const updatedCommande = await this.commandeRepository.findOne({
+        where: { id },
+      });
+      if (!updatedCommande) {
+        throw new Error('Commande non trouvée.');
+      }
+      return updatedCommande;
     } catch (error) {
-      this.logger.error(`Erreur lors de la mise à jour de la commande ${id}`, error.stack);
+      this.logger.error(
+        `Erreur lors de la mise à jour de la commande ${id}`,
+        error.stack,
+      );
       throw error;
     }
   }
 }
+
