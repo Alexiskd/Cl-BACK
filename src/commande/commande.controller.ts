@@ -53,12 +53,14 @@ export class CommandeController {
     try {
       this.logger.log(`Body reçu : ${JSON.stringify(body)}`);
 
+      // Validation du justificatif de domicile si carte de propriété manquante
       if (
         body.lostCartePropriete === 'true' &&
         (!body.domicileJustificatifPath || !body.domicileJustificatifPath.trim())
       ) {
-        throw new InternalServerErrorException(
-          "Le chemin du justificatif de domicile est requis.",
+        throw new HttpException(
+          'Le chemin du justificatif de domicile est requis.',
+          HttpStatus.BAD_REQUEST,
         );
       }
 
@@ -95,13 +97,20 @@ export class CommandeController {
         commandeData,
       );
 
+      // On émet l’événement websocket
+      this.commandeGateway.emitCommandeUpdate({ type: 'create', numeroCommande: nouvelleCommande.numeroCommande });
+
       return {
-        numeroCommande: nouvelleCommande.numeroCommande,
+        numeroCommande: nouvelleCommande.
+        numeroCommande,
         dateCommande: nouvelleCommande.dateCommande,
       };
     } catch (error) {
       this.logger.error('Erreur création commande', error.stack);
-      throw new InternalServerErrorException(`Erreur création commande : ${error.message}`);
+      if (error instanceof HttpException) throw error;
+      throw new InternalServerErrorException(
+        `Erreur création commande : ${error.message}`,
+      );
     }
   }
 
@@ -114,13 +123,16 @@ export class CommandeController {
       }
       return { success };
     } catch (error) {
-      this.logger.error(`Erreur validation commande`, error.stack);
+      this.logger.error(`Erreur validation commande ${numeroCommande}`, error.stack);
       throw new InternalServerErrorException('Erreur validation commande.');
     }
   }
 
   @Get('paid')
-  async getPaidCommandes(@Query('page') page = '1', @Query('limit') limit = '20') {
+  async getPaidCommandes(
+    @Query('page') page = '1',
+    @Query('limit') limit = '20',
+  ) {
     try {
       const [data, count] = await this.commandeService.getPaidCommandesPaginated(
         +page,
@@ -128,12 +140,15 @@ export class CommandeController {
       );
       return { data, count };
     } catch (error) {
+      this.logger.error(
+        `Erreur récupération commandes payées (page=${page}, limit=${limit})`,
+        error.stack,
+      );
       throw new HttpException(
         {
           statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
-          error: error.name,
+          error: 'GetPaidCommandesError',
           message: error.message,
-          stack: error.stack?.split('\n').slice(0, 5),
         },
         HttpStatus.INTERNAL_SERVER_ERROR,
       );
@@ -149,7 +164,7 @@ export class CommandeController {
       }
       return { success };
     } catch (error) {
-      this.logger.error(`Erreur annulation commande`, error.stack);
+      this.logger.error(`Erreur annulation commande ${numeroCommande}`, error.stack);
       throw new InternalServerErrorException('Erreur annulation commande.');
     }
   }
@@ -159,19 +174,27 @@ export class CommandeController {
     try {
       return await this.commandeService.getCommandeByNumero(numeroCommande);
     } catch (error) {
-      this.logger.error(`Erreur récupération commande`, error.stack);
+      this.logger.error(`Erreur récupération commande ${numeroCommande}`, error.stack);
       throw new InternalServerErrorException('Erreur récupération commande.');
     }
   }
 
-  @Put('update/:id')
-  async updateCommande(@Param('id') id: string, @Body() updateData: Partial<any>) {
+  @Put('update/:numeroCommande')
+  async updateCommande(
+    @Param('numeroCommande') numeroCommande: string,
+    @Body() updateData: Partial<any>,
+  ) {
     try {
-      await this.commandeService.updateCommande(id, updateData);
-      return await this.commandeService.getCommandeByNumero(id);
+      const updated = await this.commandeService.updateCommande(
+        numeroCommande,
+        updateData,
+      );
+      this.commandeGateway.emitCommandeUpdate({ type: 'update', numeroCommande });
+      return updated;
     } catch (error) {
-      this.logger.error(`Erreur mise à jour commande`, error.stack);
+      this.logger.error(`Erreur mise à jour commande ${numeroCommande}`, error.stack);
       throw new InternalServerErrorException('Erreur mise à jour commande.');
     }
   }
 }
+
