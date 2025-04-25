@@ -1,3 +1,5 @@
+// src/commande/commande.controller.ts
+
 import {
   Controller,
   Post,
@@ -155,6 +157,7 @@ export class CommandeController {
       );
       return { data, count };
     } catch (error) {
+      // Lève une exception HTTP 500 avec payload de debug
       throw new HttpException(
         {
           statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
@@ -231,3 +234,4 @@ export class CommandeController {
     }
   }
 }
+
