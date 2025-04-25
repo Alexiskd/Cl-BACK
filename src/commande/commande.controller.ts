@@ -167,4 +167,4 @@ export class CommandeController {
       throw new InternalServerErrorException("Erreur lors de la mise à jour de la commande.");
     }
   }
-}
+}// src/commande/commande.module.ts
