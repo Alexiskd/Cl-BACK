@@ -8,7 +8,6 @@ import {
 import { Server, Socket } from 'socket.io';
 import { Logger } from '@nestjs/common';
 
-// Liste d’origines autorisées (à ajuster selon vos environnements)
 const allowedOrigins = [
   process.env.CORS_ORIGIN || 'http://localhost:5173',
   'https://frontendcleservice.onrender.com',
@@ -22,22 +21,16 @@ const allowedOrigins = [
 ];
 
 @WebSocketGateway({
-  // CORS spécifique pour Socket.IO
   cors: {
     origin: (origin, callback) => {
-      // Autorise les requêtes sans origin (Postman, cURL) et celles venant de la liste
       if (!origin || allowedOrigins.includes(origin)) {
         return callback(null, true);
       }
-      return callback(
-        new Error(`Origin ${origin} non autorisée par CORS`),
-        false,
-      );
+      return callback(new Error(`Origin ${origin} non autorisée`), false);
     },
     methods: ['GET', 'POST'],
     credentials: true,
   },
-  // Forcer l'utilisation du WebSocket natif (évite le polling)
   transports: ['websocket'],
 })
 export class CommandeGateway
@@ -46,7 +39,7 @@ export class CommandeGateway
   @WebSocketServer() server: Server;
   private readonly logger = new Logger(CommandeGateway.name);
 
-  afterInit(server: Server) {
+  afterInit() {
     this.logger.log('WebSocket initialisé');
   }
 
