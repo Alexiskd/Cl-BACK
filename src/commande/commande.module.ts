@@ -1,3 +1,5 @@
+// src/commande/commande.module.ts
+
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { Commande } from './commande.entity';
