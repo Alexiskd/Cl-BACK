@@ -1,5 +1,3 @@
-// src/commande/commande.controller.ts
-
 import {
   Controller,
   Post,
@@ -44,8 +42,7 @@ export class CommandeController {
     ),
   )
   async create(
-    @UploadedFiles()
-    files: {
+    @UploadedFiles() files: {
       frontPhoto?: Express.Multer.File[];
       backPhoto?: Express.Multer.File[];
       idCardFront?: Express.Multer.File[];
@@ -98,9 +95,11 @@ export class CommandeController {
         ville: body.ville || '',
       };
 
+      // Création de la commande avec enregistrement automatique de dateCommande
       const nouvelleCommande = await this.commandeService.createCommande(
         commandeData,
       );
+
       return {
         numeroCommande: nouvelleCommande.numeroCommande,
         dateCommande: nouvelleCommande.dateCommande,
@@ -146,7 +145,7 @@ export class CommandeController {
   async getPaidCommandes(
     @Query('page') page = '1',
     @Query('limit') limit = '20',
-  ): Promise<any> {
+  ): Promise<{ data: any[]; count: number }> {
     try {
       this.logger.log(
         `Récupération commandes payées (page=${page}, limit=${limit})`,
@@ -157,7 +156,7 @@ export class CommandeController {
       );
       return { data, count };
     } catch (error) {
-      // Lève une exception HTTP 500 avec payload de debug
+      // Exposer le détail de l'erreur côté client
       throw new HttpException(
         {
           statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
