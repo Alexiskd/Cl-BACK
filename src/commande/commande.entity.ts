@@ -81,4 +81,3 @@ export class Commande {
   @Column({ default: 1 })
   quantity: number;
 }
-
