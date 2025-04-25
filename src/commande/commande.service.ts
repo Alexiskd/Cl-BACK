@@ -56,11 +56,19 @@ export class CommandeService {
     page: number,
     limit: number,
   ): Promise<[Commande[], number]> {
-    return this.commandeRepository.findAndCount({
-      where: { status: 'payer' },
-      skip: (page - 1) * limit,
-      take: limit,
-    });
+    try {
+      return await this.commandeRepository.findAndCount({
+        where: { status: 'payer' },
+        skip: (page - 1) * limit,
+        take: limit,
+      });
+    } catch (error) {
+      this.logger.error(
+        'Erreur lors de la requête paginée des commandes payées',
+        error.stack,
+      );
+      throw error;
+    }
   }
 
   async cancelCommande(numeroCommande: string): Promise<boolean> {
