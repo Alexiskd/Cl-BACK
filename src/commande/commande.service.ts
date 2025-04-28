@@ -1,4 +1,5 @@
-/ src/commande/commande.service.ts
+
+// src/commande/commande.service.ts
 import { Injectable, InternalServerErrorException, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -81,3 +82,75 @@ export class CommandeService {
     }
   }
   }
+
+  async validateCommande(numeroCommande: string): Promise<boolean> {
+    try {
+      const cmd = await this.commandeRepository.findOne({ where: { numeroCommande } });
+      if (!cmd) return false;
+      cmd.status = 'paid';
+      await this.commandeRepository.save(cmd);
+      return true;
+    } catch (error) {
+      this.logger.error(`Erreur validation ${numeroCommande}`, error.stack);
+      throw new InternalServerErrorException('Erreur validation commande');
+    }
+  }
+
+  // DEBUG catch to expose error.message
+  async getPaidCommandesPaginated(
+    page: number,
+    limit: number,
+  ): Promise<[Commande[], number]> {
+    try {
+      return await this.commandeRepository.findAndCount({
+        where: { status: 'paid' },
+        order: { dateCommande: 'DESC' },
+        skip: (page - 1) * limit,
+        take: limit,
+      });
+    } catch (error) {
+      this.logger.error(
+        `getPaidCommandesPaginated failed (page=${page}, limit=${limit})`,
+        error.stack,
+      );
+      throw new InternalServerErrorException(error.message);
+    }
+  }
+
+  async cancelCommande(numeroCommande: string): Promise<boolean> {
+    try {
+      const cmd = await this.commandeRepository.findOne({ where: { numeroCommande } });
+      if (!cmd) return false;
+      cmd.status = 'cancelled';
+      await this.commandeRepository.save(cmd);
+      return true;
+    } catch (error) {
+      this.logger.error(`Erreur annulation ${numeroCommande}`, error.stack);
+      throw new InternalServerErrorException('Erreur annulation commande');
+    }
+  }
+
+  async getCommandeByNumero(numeroCommande: string): Promise<Commande> {
+    try {
+      const cmd = await this.commandeRepository.findOne({ where: { numeroCommande } });
+      if (!cmd) throw new InternalServerErrorException('Commande non trouvée');
+      return cmd;
+    } catch (error) {
+      this.logger.error(`Erreur récupération ${numeroCommande}`, error.stack);
+      throw new InternalServerErrorException('Erreur récupération commande');
+    }
+  }
+
+  async updateCommande(
+    numeroCommande: string,
+    updateData: Partial<Commande>,
+  ): Promise<Commande> {
+    try {
+      await this.commandeRepository.update({ numeroCommande }, updateData);
+      return this.getCommandeByNumero(numeroCommande);
+    } catch (error) {
+      this.logger.error(`Erreur mise à jour ${numeroCommande}`, error.stack);
+      throw new InternalServerErrorException('Erreur mise à jour commande');
+    }
+  }
+}
