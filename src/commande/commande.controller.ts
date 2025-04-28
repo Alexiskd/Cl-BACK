@@ -68,13 +68,18 @@ export class CommandeController {
 
       const data: Partial<Commande> = {
         nom: body.nom,
-        adressePostale: `${body.address}, ${body.postalCode}, ${body.ville}${
-          body.additionalInfo ? ', ' + body.additionalInfo : ''
-        }`,
+        adressePostale: [
+          body.address,
+          body.postalCode,
+          body.ville,
+          body.additionalInfo || '',
+        ]
+          .filter(Boolean)
+          .join(', '),
         telephone: body.phone,
         adresseMail: body.email,
-        cle: body.articleName?.trim() ? [body.articleName] : [],
-        numeroCle: body.keyNumber?.trim() ? [body.keyNumber] : [],
+        cle: body.articleName?.trim() ? [body.articleName.trim()] : [],
+        numeroCle: body.keyNumber?.trim() ? [body.keyNumber.trim()] : [],
         propertyCardNumber: body.propertyCardNumber?.trim() || null,
         typeLivraison: body.keyNumber?.trim()
           ? ['par numero']
@@ -139,13 +144,8 @@ export class CommandeController {
       );
       return { data, count };
     } catch (error) {
-      this.logger.error(
-        'Erreur récupération commandes payées',
-        error.stack,
-      );
-      throw new InternalServerErrorException(
-        'Erreur lors de la récupération.',
-      );
+      this.logger.error('Erreur récupération commandes payées', error.stack);
+      throw new InternalServerErrorException('Erreur lors de la récupération.');
     }
   }
 
@@ -196,5 +196,15 @@ export class CommandeController {
     @Body() body: Partial<Commande>,
   ): Promise<Commande> {
     try {
-      return await this.commandeService.updateCommande(numeroCommande
-
+      return await this.commandeService.updateCommande(numeroCommande, body);
+    } catch (error) {
+      this.logger.error(
+        `Erreur mise à jour commande ${numeroCommande}`,
+        error.stack,
+      );
+      throw new InternalServerErrorException(
+        "Erreur lors de la mise à jour de la commande.",
+      );
+    }
+  }
+}
