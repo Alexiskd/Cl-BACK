@@ -3,20 +3,27 @@ import { Injectable, InternalServerErrorException, Logger } from '@nestjs/common
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Commande } from './commande.entity';
+import { v4 as uuidv4 } from 'uuid';
 
 @Injectable()
 export class CommandeService {
-  private readonly logger = new Logger(CommandeService.name);
+  private logger = new Logger(CommandeService.name);
 
   constructor(
     @InjectRepository(Commande)
     private readonly commandeRepository: Repository<Commande>,
   ) {}
 
-  async createCommande(data: Partial<Commande>): Promise<Commande> {
+  async createCommande(data: Partial<Commande>): Promise<string> {
     try {
-      const cmd = this.commandeRepository.create(data);
-      return await this.commandeRepository.save(cmd);
+      const numeroCommande = uuidv4();
+      const newCmd = this.commandeRepository.create({
+        ...data,
+        numeroCommande,
+        status: 'annuler',
+      });
+      await this.commandeRepository.save(newCmd);
+      return numeroCommande;
     } catch (error) {
       this.logger.error('Erreur création commande', error.stack);
       throw new InternalServerErrorException('Erreur création commande');
@@ -27,11 +34,11 @@ export class CommandeService {
     try {
       const cmd = await this.commandeRepository.findOne({ where: { numeroCommande } });
       if (!cmd) return false;
-      cmd.status = 'paid';
+      cmd.status = 'payer';
       await this.commandeRepository.save(cmd);
       return true;
     } catch (error) {
-      this.logger.error(`Erreur validation commande ${numeroCommande}`, error.stack);
+      this.logger.error(`Erreur validation ${numeroCommande}`, error.stack);
       throw new InternalServerErrorException('Erreur validation commande');
     }
   }
@@ -41,20 +48,19 @@ export class CommandeService {
     limit: number,
   ): Promise<[Commande[], number]> {
     try {
-      return await this.commandeRepository.findAndCount({
-        where: { status: 'paid' },
-        order: { dateCommande: 'DESC' },
-        skip: (page - 1) * limit,
-        take: limit,
-      });
+      const qb = this.commandeRepository
+        .createQueryBuilder('commande')
+        .where('commande.status = :status', { status: 'payer' })
+        .orderBy('commande.dateCommande', 'DESC')
+        .skip((page - 1) * limit)
+        .take(limit);
+      return qb.getManyAndCount();
     } catch (error) {
       this.logger.error(
-        `getPaidCommandesPaginated failed (page=${page}, limit=${limit})`,
+        `Erreur pagination paid (page=${page} limit=${limit})`,
         error.stack,
       );
-      throw new InternalServerErrorException(
-        `Erreur récupération commandes payées : ${error.message}`,
-      );
+      throw new InternalServerErrorException('Erreur récupération commandes payées');
     }
   }
 
@@ -62,11 +68,11 @@ export class CommandeService {
     try {
       const cmd = await this.commandeRepository.findOne({ where: { numeroCommande } });
       if (!cmd) return false;
-      cmd.status = 'cancelled';
+      cmd.status = 'annuler';
       await this.commandeRepository.save(cmd);
       return true;
     } catch (error) {
-      this.logger.error(`Erreur annulation commande ${numeroCommande}`, error.stack);
+      this.logger.error(`Erreur annulation ${numeroCommande}`, error.stack);
       throw new InternalServerErrorException('Erreur annulation commande');
     }
   }
@@ -77,7 +83,7 @@ export class CommandeService {
       if (!cmd) throw new InternalServerErrorException('Commande non trouvée');
       return cmd;
     } catch (error) {
-      this.logger.error(`Erreur récupération commande ${numeroCommande}`, error.stack);
+      this.logger.error(`Erreur get ${numeroCommande}`, error.stack);
       throw new InternalServerErrorException('Erreur récupération commande');
     }
   }
@@ -90,8 +96,9 @@ export class CommandeService {
       await this.commandeRepository.update({ numeroCommande }, updateData);
       return this.getCommandeByNumero(numeroCommande);
     } catch (error) {
-      this.logger.error(`Erreur mise à jour commande ${numeroCommande}`, error.stack);
+      this.logger.error(`Erreur update ${numeroCommande}`, error.stack);
       throw new InternalServerErrorException('Erreur mise à jour commande');
     }
   }
 }
+
