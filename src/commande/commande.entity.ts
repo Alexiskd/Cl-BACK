@@ -1,4 +1,4 @@
-/// src/commande/commande.entity.ts
+// src/commande/commande.entity.ts
 import {
   Entity,
   PrimaryGeneratedColumn,
@@ -83,3 +83,4 @@ export class Commande {
   @CreateDateColumn()
   dateCommande: Date;
 }
+
