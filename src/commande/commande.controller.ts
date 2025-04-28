@@ -1,3 +1,4 @@
+// src/commande/commande.controller.ts
 import {
   Controller,
   Post,
@@ -13,10 +14,10 @@ import {
   InternalServerErrorException,
   Logger,
 } from '@nestjs/common';
-import { CommandeService } from './commande.service';
-import { Commande } from './commande.entity';
 import { FileFieldsInterceptor } from '@nestjs/platform-express';
 import { memoryStorage } from 'multer';
+
+import { CommandeService } from './commande.service';
 import { CommandeGateway } from './commande.gateway';
 
 @Controller('commande')
@@ -59,50 +60,36 @@ export class CommandeController {
         throw new InternalServerErrorException("Le chemin du justificatif de domicile est requis.");
       }
 
-      const hasCartePropriete = body.propertyCardNumber && body.propertyCardNumber.trim() !== ''
-        ? true
-        : false;
+      const hasCartePropriete = !!(body.propertyCardNumber && body.propertyCardNumber.trim());
 
-      const commandeData: Partial<Commande> = {
+      const commandeData: Partial<any> = {
         nom: body.nom,
         adressePostale: `${body.address}, ${body.postalCode}, ${body.ville}, ${body.additionalInfo}`,
         telephone: body.phone,
         adresseMail: body.email,
-        cle: body.articleName && body.articleName.trim() !== '' ? [body.articleName] : [],
-        numeroCle: body.keyNumber && body.keyNumber.trim() !== '' ? [body.keyNumber] : [],
-        propertyCardNumber: body.propertyCardNumber && body.propertyCardNumber.trim() !== ''
-          ? body.propertyCardNumber
-          : null,
-        typeLivraison: body.keyNumber && body.keyNumber.trim() !== ''
-          ? ['par numero']
-          : ['par envoie postale'],
+        cle: body.articleName?.trim() ? [body.articleName] : [],
+        numeroCle: body.keyNumber?.trim() ? [body.keyNumber] : [],
+        propertyCardNumber: body.propertyCardNumber?.trim() || null,
+        typeLivraison: body.keyNumber?.trim() ? ['par numero'] : ['par envoi postal'],
         shippingMethod: body.shippingMethod || '',
         deliveryType: body.deliveryType || '',
-        urlPhotoRecto: files.frontPhoto && files.frontPhoto.length > 0
-          ? files.frontPhoto[0].buffer.toString('base64')
-          : null,
-        urlPhotoVerso: files.backPhoto && files.backPhoto.length > 0
-          ? files.backPhoto[0].buffer.toString('base64')
-          : null,
-        prix: body.prix ? parseFloat(body.prix) : 0,
-        isCleAPasse: body.isCleAPasse !== undefined ? body.isCleAPasse === 'true' : null,
-        hasCartePropriete: hasCartePropriete,
-        idCardFront: files.idCardFront && files.idCardFront.length > 0
-          ? files.idCardFront[0].buffer.toString('base64')
-          : null,
-        idCardBack: files.idCardBack && files.idCardBack.length > 0
-          ? files.idCardBack[0].buffer.toString('base64')
-          : null,
+        urlPhotoRecto: files.frontPhoto?.[0]?.buffer.toString('base64') || null,
+        urlPhotoVerso: files.backPhoto?.[0]?.buffer.toString('base64') || null,
+        prix: parseFloat(body.prix) || 0,
+        isCleAPasse: body.isCleAPasse === 'true',
+        hasCartePropriete,
+        idCardFront: files.idCardFront?.[0]?.buffer.toString('base64') || null,
+        idCardBack: files.idCardBack?.[0]?.buffer.toString('base64') || null,
         domicileJustificatif: body.domicileJustificatifPath || null,
-        attestationPropriete: body.attestationPropriete !== undefined ? body.attestationPropriete === 'true' : null,
+        attestationPropriete: body.attestationPropriete === 'true',
         ville: body.ville || '',
       };
 
-      const numeroCommande = await this.commandeService.createCommande(commandeData);
-      return { numeroCommande };
+      const commande = await this.commandeService.createCommande(commandeData);
+      return { numeroCommande: commande.numeroCommande };
     } catch (error) {
       this.logger.error('Erreur lors de la création de la commande', error.stack);
-      throw new InternalServerErrorException("Erreur lors de la création de la commande.");
+      throw new InternalServerErrorException('Erreur lors de la création de la commande.');
     }
   }
 
@@ -113,14 +100,11 @@ export class CommandeController {
     try {
       const success = await this.commandeService.validateCommande(numeroCommande);
       if (success) {
-        this.commandeGateway.emitCommandeUpdate({
-          type: 'validate',
-          numeroCommande,
-        });
+        this.commandeGateway.emitCommandeUpdate({ type: 'validate', numeroCommande });
       }
       return { success };
     } catch (error) {
-      this.logger.error(`Erreur lors de la validation de la commande ${numeroCommande}`, error.stack);
+      this.logger.error(`Erreur validation commande ${numeroCommande}`, error.stack);
       throw new InternalServerErrorException('Erreur lors de la validation de la commande.');
     }
   }
@@ -129,16 +113,16 @@ export class CommandeController {
   async getPaidCommandes(
     @Query('page') page = '1',
     @Query('limit') limit = '20',
-  ): Promise<{ data: Commande[]; count: number }> {
+  ): Promise<{ data: any[]; count: number }> {
     try {
       const [data, count] = await this.commandeService.getPaidCommandesPaginated(
-        parseInt(page),
-        parseInt(limit),
+        +page,
+        +limit,
       );
       return { data, count };
     } catch (error) {
-      this.logger.error('Erreur lors de la récupération des commandes payées', error.stack);
-      throw new InternalServerErrorException("Erreur lors de la récupération des commandes payées.");
+      this.logger.error('Erreur récupération commandes payées', error.stack);
+      throw new InternalServerErrorException('Erreur lors de la récupération.');
     }
   }
 
@@ -149,14 +133,11 @@ export class CommandeController {
     try {
       const success = await this.commandeService.cancelCommande(numeroCommande);
       if (success) {
-        this.commandeGateway.emitCommandeUpdate({
-          type: 'cancel',
-          numeroCommande,
-        });
+        this.commandeGateway.emitCommandeUpdate({ type: 'cancel', numeroCommande });
       }
       return { success };
     } catch (error) {
-      this.logger.error(`Erreur lors de l'annulation de la commande ${numeroCommande}`, error.stack);
+      this.logger.error(`Erreur annulation commande ${numeroCommande}`, error.stack);
       throw new InternalServerErrorException("Erreur lors de l'annulation de la commande.");
     }
   }
@@ -164,29 +145,25 @@ export class CommandeController {
   @Get(':numeroCommande')
   async getCommande(
     @Param('numeroCommande') numeroCommande: string,
-  ): Promise<Commande> {
+  ): Promise<any> {
     try {
       return await this.commandeService.getCommandeByNumero(numeroCommande);
     } catch (error) {
-      this.logger.error(`Erreur lors de la récupération de la commande ${numeroCommande}`, error.stack);
+      this.logger.error(`Erreur récupération commande ${numeroCommande}`, error.stack);
       throw new InternalServerErrorException("Erreur lors de la récupération de la commande.");
     }
   }
-  
+
   @Put('update/:id')
   async updateCommande(
     @Param('id') id: string,
-    @Body() updateData: Partial<Commande>,
-  ): Promise<Commande> {
+    @Body() updateData: Partial<any>,
+  ): Promise<any> {
     try {
       await this.commandeService.updateCommande(id, updateData);
-      const updatedCommande = await this.commandeService.getCommandeByNumero(id);
-      if (!updatedCommande) {
-        throw new Error('Commande non trouvée.');
-      }
-      return updatedCommande;
+      return await this.commandeService.getCommandeByNumero(id);
     } catch (error) {
-      this.logger.error(`Erreur lors de la mise à jour de la commande ${id}`, error.stack);
+      this.logger.error(`Erreur mise à jour commande ${id}`, error.stack);
       throw new InternalServerErrorException("Erreur lors de la mise à jour de la commande.");
     }
   }
