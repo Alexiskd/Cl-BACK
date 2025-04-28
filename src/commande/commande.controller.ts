@@ -85,8 +85,8 @@ export class CommandeController {
         ville: body.ville || '',
       };
 
-      const numeroCommande = await this.commandeService.createCommande(commandeData);
-      return { numeroCommande };
+      const commande = await this.commandeService.createCommande(commandeData);
+      return { numeroCommande: commande.numeroCommande };
     } catch (error) {
       this.logger.error('Erreur lors de la création de la commande', error.stack);
       throw new InternalServerErrorException('Erreur lors de la création de la commande.');
@@ -167,5 +167,4 @@ export class CommandeController {
       throw new InternalServerErrorException("Erreur lors de la mise à jour de la commande.");
     }
   }
-}// src/commande/commande.module.ts
-
+}
