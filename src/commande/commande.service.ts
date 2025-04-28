@@ -36,8 +36,8 @@ export class CommandeService {
     }
   }
 
-  // ================= DEBUG VERSION =================
-  // On remonte ici le message brut d'erreur pour pouvoir le voir coté front
+  // ===================== DEBUG =====================
+  // Cette version renvoie directement error.message pour débug
   async getPaidCommandesPaginated(
     page: number,
     limit: number,
@@ -45,22 +45,20 @@ export class CommandeService {
     try {
       return await this.commandeRepository.findAndCount({
         where: { status: 'paid' },
-        // Assurez-vous que `dateCommande` existe bien dans votre Entity
-        order: { dateCommande: 'DESC' },
+        order: { dateCommande: 'DESC' },  // Assurez-vous que dateCommande existe dans l'Entity
         skip: (page - 1) * limit,
         take: limit,
       });
     } catch (error) {
-      // Log complet
       this.logger.error(
         `getPaidCommandesPaginated failed (page=${page}, limit=${limit})`,
         error.stack,
       );
-      // Renvoi TEMPORAIRE du message d’erreur exact
-      throw new InternalServerErrorException(`Back-end erreur : ${error.message}`);
+      // **Renvoi direct** du message d'erreur brut
+      throw new InternalServerErrorException(error.message);
     }
   }
-  // ============= FIN DEBUG VERSION =============
+  // ===================== FIN DEBUG =====================
 
   async cancelCommande(numeroCommande: string): Promise<boolean> {
     try {
