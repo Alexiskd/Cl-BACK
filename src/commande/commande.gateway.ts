@@ -32,4 +32,3 @@ export class CommandeGateway
     this.server.emit('commandeUpdate', payload);
   }
 }
-
