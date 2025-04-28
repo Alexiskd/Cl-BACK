@@ -29,4 +29,3 @@ export class CommandeGateway implements OnGatewayInit, OnGatewayConnection, OnGa
     this.server.emit('commandeUpdate', payload);
   }
 }
-
