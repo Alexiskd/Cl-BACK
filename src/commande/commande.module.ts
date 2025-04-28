@@ -13,4 +13,3 @@ import { CommandeGateway } from './commande.gateway';
   exports: [CommandeService],
 })
 export class CommandeModule {}
-
