@@ -1,3 +1,5 @@
+// src/app.module.ts
+
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { ServeStaticModule, ServeStaticModuleOptions } from '@nestjs/serve-static';
@@ -45,7 +47,9 @@ import { TypeOrmModule } from '@nestjs/typeorm';
     // Configuration de la connexion à la base de données
     TypeOrmModule.forRoot({
       type: 'postgres',
-      url: process.env.DATABASE_URL || 'postgresql://cleservice_user:LUWibq2Mqj4yqZnuQgZhBGk8exqGSIvS@dpg-cuec3352ng1s7387587g-a.oregon-postgres.render.com/cleservice',
+      url:
+        process.env.DATABASE_URL ||
+        'postgresql://cleservice_user:LUWibq2Mqj4yqZnuQgZhBGk8exqGSIvS@dpg-cuec3352ng1s7387587g-a.oregon-postgres.render.com/cleservice',
       autoLoadEntities: true,
       synchronize: false,
       ssl: { rejectUnauthorized: false },
