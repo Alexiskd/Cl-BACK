@@ -10,7 +10,7 @@ import {
 import { Server, Socket } from 'socket.io';
 import { Logger } from '@nestjs/common';
 
-// Reprenez ici votre liste d’origines autorisées depuis main.ts
+// Liste des origines autorisées pour CORS Socket.IO
 const allowedOrigins = [
   process.env.CORS_ORIGIN || 'http://localhost:5173',
   'https://frontendcleservice.onrender.com',
@@ -24,42 +24,43 @@ const allowedOrigins = [
 ];
 
 @WebSocketGateway({
-  // CORS côté Socket.IO
   cors: {
     origin: (origin, callback) => {
-      // Autoriser Postman/cURL (sans origine) et vos domaines
+      // Autoriser les requêtes sans origine (Postman, cURL) et les domaines listés
       if (!origin || allowedOrigins.includes(origin)) {
         return callback(null, true);
       }
-      return callback(
-        new Error(`Origin ${origin} non autorisée par CORS`),
-        false,
-      );
+      return callback(new Error(`Origin ${origin} non autorisée par CORS`), false);
     },
     credentials: true,
   },
-  // Forcer le transport WebSocket (évite les erreurs 502 sur le polling)
+  // Forcer l'utilisation du transport WebSocket pur
   transports: ['websocket'],
 })
 export class CommandeGateway
   implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect
 {
   @WebSocketServer() server: Server;
-  private logger: Logger = new Logger('CommandeGateway');
+  private readonly logger = new Logger(CommandeGateway.name);
 
   afterInit(server: Server) {
     this.logger.log('WebSocket initialisé');
   }
 
   handleConnection(client: Socket) {
-    this.logger.log(`Client connecté: ${client.id}`);
+    this.logger.log(`Client connecté : ${client.id}`);
   }
 
   handleDisconnect(client: Socket) {
-    this.logger.log(`Client déconnecté: ${client.id}`);
+    this.logger.log(`Client déconnecté : ${client.id}`);
   }
 
+  /**
+   * Émet un événement 'commandeUpdate' à tous les clients connectés
+   * @param payload – données de la mise à jour (par exemple { type: 'validate'|'cancel', numeroCommande })
+   */
   emitCommandeUpdate(payload: any) {
     this.server.emit('commandeUpdate', payload);
   }
 }
+
