@@ -1,10 +1,5 @@
 // src/commande/commande.entity.ts
-import {
-  Entity,
-  PrimaryGeneratedColumn,
-  Column,
-  CreateDateColumn,
-} from 'typeorm';
+import { Entity, Column, PrimaryGeneratedColumn, CreateDateColumn } from 'typeorm';
 
 @Entity()
 export class Commande {
@@ -38,10 +33,10 @@ export class Commande {
   @Column('simple-array')
   typeLivraison: string[];
 
-  @Column({ default: '' })
+  @Column({ nullable: true, default: '' })
   shippingMethod: string;
 
-  @Column({ default: '' })
+  @Column({ nullable: true, default: '' })
   deliveryType: string;
 
   @Column('text', { nullable: true })
@@ -74,15 +69,12 @@ export class Commande {
   @Column({ nullable: true, default: null })
   attestationPropriete: boolean;
 
-  @Column({ default: '' })
+  @Column({ nullable: true, default: '' })
   ville: string;
 
-  @Column({ default: 1 })
+  @Column({ nullable: true, default: 1 })
   quantity: number;
 
   @CreateDateColumn()
   dateCommande: Date;
 }
-
-
-
