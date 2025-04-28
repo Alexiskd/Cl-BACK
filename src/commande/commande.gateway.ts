@@ -1,5 +1,4 @@
 // src/commande/commande.gateway.ts
-
 import {
   WebSocketGateway,
   WebSocketServer,
@@ -10,7 +9,7 @@ import {
 import { Server, Socket } from 'socket.io';
 import { Logger } from '@nestjs/common';
 
-// Reprenez ici votre liste d’origines autorisées depuis main.ts
+// Liste des origines autorisées (à ajuster si besoin)
 const allowedOrigins = [
   process.env.CORS_ORIGIN || 'http://localhost:5173',
   'https://frontendcleservice.onrender.com',
@@ -24,21 +23,15 @@ const allowedOrigins = [
 ];
 
 @WebSocketGateway({
-  // CORS côté Socket.IO
   cors: {
     origin: (origin, callback) => {
-      // Autoriser Postman/cURL (sans origine) et vos domaines
       if (!origin || allowedOrigins.includes(origin)) {
         return callback(null, true);
       }
-      return callback(
-        new Error(`Origin ${origin} non autorisée par CORS`),
-        false,
-      );
+      return callback(new Error(`Origin ${origin} non autorisée par CORS`), false);
     },
     credentials: true,
   },
-  // Forcer le transport WebSocket (évite les erreurs 502 sur le polling)
   transports: ['websocket'],
 })
 export class CommandeGateway
