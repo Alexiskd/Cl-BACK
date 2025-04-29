@@ -1,4 +1,3 @@
-// src/commande/commande.controller.ts
 import {
   Controller,
   Post,
@@ -167,7 +166,4 @@ export class CommandeController {
       throw new InternalServerErrorException("Erreur lors de la mise à jour de la commande.");
     }
   }
-}
-
-
 }
