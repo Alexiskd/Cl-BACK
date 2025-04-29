@@ -53,12 +53,12 @@ export class CommandeController {
   ): Promise<{ numeroCommande: string }> {
     try {
       this.logger.log('Body reçu : ' + JSON.stringify(body));
-      // À adapter selon votre logique de création...
+      // Construisez ici votre objet partiel selon votre front
       const commande = await this.commandeService.createCommande({
         nom: body.nom,
         adressePostale: body.adressePostale,
-        cle: body.cleArray || [],
-        // etc.
+        cle: body.cle || [],
+        // ...
       } as any);
       return { numeroCommande: commande.numeroCommande };
     } catch (error) {
@@ -91,12 +91,10 @@ export class CommandeController {
         +page,
         +limit,
       );
-      // Mapping pour le front
+      // On mappe pour ajouter le champ produitCommande
       const data = cmds.map((cmd) => ({
         ...cmd,
-        produitCommande: Array.isArray(cmd.cle)
-          ? cmd.cle.join(', ')
-          : cmd.cle,
+        produitCommande: Array.isArray(cmd.cle) ? cmd.cle.join(', ') : cmd.cle,
       }));
       return { data, count };
     } catch (error) {
