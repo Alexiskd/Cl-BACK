@@ -42,8 +42,7 @@ export class CommandeController {
     ),
   )
   async create(
-    @UploadedFiles()
-    files: {
+    @UploadedFiles() files: {
       frontPhoto?: Express.Multer.File[];
       backPhoto?: Express.Multer.File[];
       idCardFront?: Express.Multer.File[];
