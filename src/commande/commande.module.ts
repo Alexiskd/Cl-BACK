@@ -1,13 +1,15 @@
 // src/commande/commande.module.ts
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { Commande } from './commande.entity';
 import { CommandeController } from './commande.controller';
 import { CommandeService } from './commande.service';
 import { CommandeGateway } from './commande.gateway';
+import { Commande } from './commande.entity';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Commande])],
+  imports: [
+    TypeOrmModule.forFeature([Commande]),   // ← indispensable pour injecter Repository<Commande>
+  ],
   controllers: [CommandeController],
   providers: [CommandeService, CommandeGateway],
 })
