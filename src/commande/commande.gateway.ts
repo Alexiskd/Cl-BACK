@@ -11,8 +11,7 @@ import { Logger } from '@nestjs/common';
 
 @WebSocketGateway({ cors: true })
 export class CommandeGateway
-  implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect
-{
+  implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect {
   @WebSocketServer() server: Server;
   private logger = new Logger(CommandeGateway.name);
 
@@ -32,3 +31,4 @@ export class CommandeGateway
     this.server.emit('commandeUpdate', payload);
   }
 }
+
