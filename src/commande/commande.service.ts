@@ -1,4 +1,3 @@
-// src/commande/commande.service.ts
 import { Injectable, InternalServerErrorException, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -43,7 +42,6 @@ export class CommandeService {
     try {
       return await this.commandeRepository.findAndCount({
         where: { status: 'paid' },
-        order: { dateCommande: 'DESC' },
         skip: (page - 1) * limit,
         take: limit,
       });
@@ -58,11 +56,8 @@ export class CommandeService {
 
   async cancelCommande(numeroCommande: string): Promise<boolean> {
     try {
-      const cmd = await this.commandeRepository.findOne({ where: { numeroCommande } });
-      if (!cmd) return false;
-      cmd.status = 'cancelled';
-      await this.commandeRepository.save(cmd);
-      return true;
+      const result = await this.commandeRepository.delete({ numeroCommande });
+      return result.affected > 0;
     } catch (error) {
       this.logger.error(`Erreur annulation commande ${numeroCommande}`, error.stack);
       throw new InternalServerErrorException('Erreur annulation commande');
@@ -88,10 +83,7 @@ export class CommandeService {
       await this.commandeRepository.update({ numeroCommande }, updateData);
       return this.getCommandeByNumero(numeroCommande);
     } catch (error) {
-      this.logger.error(
-        `Erreur mise à jour commande ${numeroCommande}`,
-        error.stack,
-      );
+      this.logger.error(`Erreur mise à jour commande ${numeroCommande}`, error.stack);
       throw new InternalServerErrorException('Erreur mise à jour commande');
     }
   }
