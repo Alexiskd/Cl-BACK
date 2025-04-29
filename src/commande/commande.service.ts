@@ -49,22 +49,23 @@ export class CommandeService {
     page: number,
     limit: number,
   ): Promise<[Commande[], number]> {
+    this.logger.log(`→ getPaidCommandesPaginated called (page=${page}, limit=${limit})`);
     try {
       const order: FindOptionsOrder<Commande> = { dateCommande: 'DESC' };
-      return await this.commandeRepository.findAndCount({
+      const result = await this.commandeRepository.findAndCount({
         where: { status: 'paid' },
         skip: (page - 1) * limit,
         take: limit,
         order,
       });
+      this.logger.log(`← Found ${result[1]} commandes payées`);
+      return result;
     } catch (error) {
       this.logger.error(
-        `getPaidCommandesPaginated failed (page=${page}, limit=${limit})`,
+        `‼ getPaidCommandesPaginated failed (page=${page}, limit=${limit})`,
         error.stack,
       );
-      throw new InternalServerErrorException(
-        'Erreur récupération commandes payées',
-      );
+      throw new InternalServerErrorException('Erreur récupération commandes payées');
     }
   }
 
