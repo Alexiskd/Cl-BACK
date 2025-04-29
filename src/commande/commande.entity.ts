@@ -1,3 +1,13 @@
+// src/commande/commande.entity.ts
+
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  CreateDateColumn,
+} from 'typeorm';
+import { Expose } from 'class-transformer';
+
 @Entity()
 export class Commande {
   @PrimaryGeneratedColumn('uuid')
@@ -72,9 +82,16 @@ export class Commande {
   @Column({ nullable: true, default: 1 })
   quantity: number;
 
-  /**
-   * Date d’enregistrement en base, utilisée comme date de commande
-   */
+  /** Date d’enregistrement en base, utilisée comme date de commande */
   @CreateDateColumn({ type: 'timestamp' })
   createdAt: Date;
+
+  /**
+   * Exposé au front sous la clé `produitCommande`
+   */
+  @Expose()
+  get produitCommande(): string {
+    return this.cle.join(', ');
+  }
 }
+
