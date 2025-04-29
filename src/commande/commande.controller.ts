@@ -60,7 +60,7 @@ export class CommandeController {
         telephone: body.telephone,
         adresseMail: body.adresseMail,
         typeLivraison: body.typeLivraison || [],
-        // … ajoutez les champs restants
+        // … ajoutez ici les autres champs selon vos besoins
       } as any);
       return { numeroCommande: cmd.numeroCommande };
     } catch (error) {
@@ -99,9 +99,7 @@ export class CommandeController {
         );
       const data = cmds.map((cmd) => ({
         ...cmd,
-        produitCommande: Array.isArray(cmd.cle)
-          ? cmd.cle.join(', ')
-          : cmd.cle,
+        produitCommande: Array.isArray(cmd.cle) ? cmd.cle.join(', ') : cmd.cle,
       }));
       return { data, count };
     } catch (error) {
