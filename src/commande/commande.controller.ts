@@ -75,7 +75,8 @@ export class CommandeController {
       };
 
       const commande = await this.commandeService.createCommande(commandeData);
-      return { numeroCommande: commande }; // ✅ Correction faite ici
+      return { numeroCommande: commande };
+ // ✅ Correction faite ici
     } catch (error) {
       this.logger.error('Erreur lors de la création de la commande', error.stack);
       throw new InternalServerErrorException('Erreur lors de la création de la commande.');
