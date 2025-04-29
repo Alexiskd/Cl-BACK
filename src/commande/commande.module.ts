@@ -1,4 +1,3 @@
-
 // src/commande/commande.module.ts
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
@@ -13,4 +12,3 @@ import { CommandeGateway } from './commande.gateway';
   providers: [CommandeService, CommandeGateway],
 })
 export class CommandeModule {}
-
