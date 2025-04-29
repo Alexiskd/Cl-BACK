@@ -80,8 +80,9 @@ export class Commande {
   @Column({ nullable: true, default: 1 })
   quantity: number;
 
-  // Permet de trier / exposer la date de création
+  // Pour exposer la date de création
   @CreateDateColumn()
   dateCommande: Date;
 }
+
 
