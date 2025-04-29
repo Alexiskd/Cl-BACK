@@ -11,20 +11,21 @@ import { Logger } from '@nestjs/common';
 
 @WebSocketGateway({ cors: true })
 export class CommandeGateway
-  implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect {
+  implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect
+{
   @WebSocketServer() server: Server;
-  private logger = new Logger('CommandeGateway');
+  private logger = new Logger(CommandeGateway.name);
 
   afterInit(server: Server) {
-    this.logger.log('WS init');
+    this.logger.log('WebSocket server initialized');
   }
 
   handleConnection(client: Socket) {
-    this.logger.log(`Client connecté: ${client.id}`);
+    this.logger.log(`Client connected: ${client.id}`);
   }
 
   handleDisconnect(client: Socket) {
-    this.logger.log(`Client déconnecté: ${client.id}`);
+    this.logger.log(`Client disconnected: ${client.id}`);
   }
 
   emitCommandeUpdate(payload: any) {
