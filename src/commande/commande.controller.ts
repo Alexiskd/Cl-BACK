@@ -1,3 +1,4 @@
+// src/commande/commande.controller.ts
 import {
   Controller,
   Post,
@@ -42,36 +43,24 @@ export class CommandeController {
   )
   async create(
     @UploadedFiles()
-    files: Record<string, Express.Multer.File[]>,
+    files: {
+      frontPhoto?: Express.Multer.File[];
+      backPhoto?: Express.Multer.File[];
+      idCardFront?: Express.Multer.File[];
+      idCardBack?: Express.Multer.File[];
+    },
     @Body() body: any,
   ): Promise<{ numeroCommande: string }> {
     try {
       this.logger.log('Body reçu : ' + JSON.stringify(body));
-      // À vous de remplir data depuis body+files
-      const data: Partial<Commande> = {
+      // À adapter selon votre logique de création...
+      const commande = await this.commandeService.createCommande({
         nom: body.nom,
         adressePostale: body.adressePostale,
-        cle: body.cle || [],
-        numeroCle: body.numeroCle || [],
-        telephone: body.telephone,
-        adresseMail: body.adresseMail,
-        typeLivraison: body.typeLivraison || [],
-        shippingMethod: body.shippingMethod,
-        deliveryType: body.deliveryType,
-        prix: parseFloat(body.prix) || 0,
-        quantity: parseInt(body.quantity, 10) || 1,
-        urlPhotoRecto: files.frontPhoto?.[0]?.buffer.toString('base64'),
-        urlPhotoVerso: files.backPhoto?.[0]?.buffer.toString('base64'),
-        idCardFront: files.idCardFront?.[0]?.buffer.toString('base64'),
-        idCardBack: files.idCardBack?.[0]?.buffer.toString('base64'),
-        propertyCardNumber: body.propertyCardNumber,
-        hasCartePropriete: body.hasCartePropriete === 'true',
-        domicileJustificatif: body.domicileJustificatif,
-        attestationPropriete: body.attestationPropriete === 'true',
-        ville: body.ville,
-      };
-      const cmd = await this.commandeService.createCommande(data);
-      return { numeroCommande: cmd.numeroCommande };
+        cle: body.cleArray || [],
+        // etc.
+      } as any);
+      return { numeroCommande: commande.numeroCommande };
     } catch (error) {
       this.logger.error('Erreur création commande', error.stack);
       throw new InternalServerErrorException('Erreur création commande');
@@ -82,7 +71,9 @@ export class CommandeController {
   async validate(@Param('numeroCommande') num: string) {
     try {
       const success = await this.commandeService.validateCommande(num);
-      if (success) this.commandeGateway.emitCommandeUpdate({ type: 'validate', numeroCommande: num });
+      if (success) {
+        this.commandeGateway.emitCommandeUpdate({ type: 'validate', numeroCommande: num });
+      }
       return { success };
     } catch (error) {
       this.logger.error(`Erreur validation commande ${num}`, error.stack);
@@ -96,24 +87,16 @@ export class CommandeController {
     @Query('limit') limit = '20',
   ): Promise<{ data: any[]; count: number }> {
     try {
-      const [rawData, count] = await this.commandeService.getPaidCommandesPaginated(+page, +limit);
-      const data = rawData.map((cmd: Commande) => ({
-        id: cmd.id,
-        numeroCommande: cmd.numeroCommande,
-        nom: cmd.nom,
-        adressePostale: cmd.adressePostale,
-        telephone: cmd.telephone,
-        adresseMail: cmd.adresseMail,
-        shippingMethod: cmd.shippingMethod,
-        deliveryType: cmd.deliveryType,
-        prix: parseFloat(cmd.prix as any),
-        quantity: cmd.quantity,
-        cle: cmd.cle,
-        numeroCle: cmd.numeroCle,
-        produitCommande: Array.isArray(cmd.cle) ? cmd.cle.join(', ') : cmd.cle || '',
-        urlPhotoRecto: cmd.urlPhotoRecto,
-        urlPhotoVerso: cmd.urlPhotoVerso,
-        // pas de dateCommande → pas de createdAt
+      const [cmds, count] = await this.commandeService.getPaidCommandesPaginated(
+        +page,
+        +limit,
+      );
+      // Mapping pour le front
+      const data = cmds.map((cmd) => ({
+        ...cmd,
+        produitCommande: Array.isArray(cmd.cle)
+          ? cmd.cle.join(', ')
+          : cmd.cle,
       }));
       return { data, count };
     } catch (error) {
@@ -126,7 +109,9 @@ export class CommandeController {
   async cancel(@Param('numeroCommande') num: string) {
     try {
       const success = await this.commandeService.cancelCommande(num);
-      if (success) this.commandeGateway.emitCommandeUpdate({ type: 'cancel', numeroCommande: num });
+      if (success) {
+        this.commandeGateway.emitCommandeUpdate({ type: 'cancel', numeroCommande: num });
+      }
       return { success };
     } catch (error) {
       this.logger.error(`Erreur annulation commande ${num}`, error.stack);
