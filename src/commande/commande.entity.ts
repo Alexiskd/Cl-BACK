@@ -1,9 +1,7 @@
-// src/commande/commande.entity.ts
 import {
   Entity,
   Column,
   PrimaryGeneratedColumn,
-  CreateDateColumn,
 } from 'typeorm';
 
 @Entity()
@@ -79,8 +77,4 @@ export class Commande {
 
   @Column({ nullable: true, default: 1 })
   quantity: number;
-
-  // Champ nécessaire pour trier et exposer createdAt
-  @CreateDateColumn()
-  dateCommande: Date;
 }
