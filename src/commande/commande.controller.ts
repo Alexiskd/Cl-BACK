@@ -53,7 +53,7 @@ export class CommandeController {
   ): Promise<{ numeroCommande: string }> {
     try {
       this.logger.log('Body reçu : ' + JSON.stringify(body));
-      // TODO: construire l’objet Partial<Commande> à partir de body + fichiers
+      // TODO: transformer body+files ➔ Partial<Commande>
       const commande = await this.commandeService.createCommande({} as any);
       return { numeroCommande: commande.numeroCommande };
     } catch (error) {
@@ -69,14 +69,14 @@ export class CommandeController {
     try {
       const success = await this.commandeService.validateCommande(numeroCommande);
       if (success) {
-        this.commandeGateway.emitCommandeUpdate({
-          type: 'validate',
-          numeroCommande,
-        });
+        this.commandeGateway.emitCommandeUpdate({ type: 'validate', numeroCommande });
       }
       return { success };
     } catch (error) {
-      this.logger.error(`Erreur validation commande ${numeroCommande}`, error.stack);
+      this.logger.error(
+        `Erreur validation commande ${numeroCommande}`,
+        error.stack,
+      );
       throw new InternalServerErrorException('Erreur validation commande');
     }
   }
@@ -91,8 +91,6 @@ export class CommandeController {
         +page,
         +limit,
       );
-
-      // On transforme chaque Commande pour correspondre au front
       const data = rawData.map((cmd: Commande) => ({
         id: cmd.id,
         numeroCommande: cmd.numeroCommande,
@@ -109,10 +107,8 @@ export class CommandeController {
         produitCommande: Array.isArray(cmd.cle) ? cmd.cle.join(', ') : cmd.cle || '',
         urlPhotoRecto: cmd.urlPhotoRecto,
         urlPhotoVerso: cmd.urlPhotoVerso,
-        // créé pour matcher createdAt côté front
         createdAt: cmd.dateCommande,
       }));
-
       return { data, count };
     } catch (error) {
       this.logger.error('Erreur récupération commandes payées', error.stack);
@@ -127,14 +123,14 @@ export class CommandeController {
     try {
       const success = await this.commandeService.cancelCommande(numeroCommande);
       if (success) {
-        this.commandeGateway.emitCommandeUpdate({
-          type: 'cancel',
-          numeroCommande,
-        });
+        this.commandeGateway.emitCommandeUpdate({ type: 'cancel', numeroCommande });
       }
       return { success };
     } catch (error) {
-      this.logger.error(`Erreur annulation commande ${numeroCommande}`, error.stack);
+      this.logger.error(
+        `Erreur annulation commande ${numeroCommande}`,
+        error.stack,
+      );
       throw new InternalServerErrorException('Erreur annulation commande');
     }
   }
@@ -146,7 +142,10 @@ export class CommandeController {
     try {
       return await this.commandeService.getCommandeByNumero(numeroCommande);
     } catch (error) {
-      this.logger.error(`Erreur récupération commande ${numeroCommande}`, error.stack);
+      this.logger.error(
+        `Erreur récupération commande ${numeroCommande}`,
+        error.stack,
+      );
       throw new InternalServerErrorException('Erreur récupération commande');
     }
   }
@@ -160,7 +159,10 @@ export class CommandeController {
       await this.commandeService.updateCommande(id, data);
       return this.commandeService.getCommandeByNumero(id);
     } catch (error) {
-      this.logger.error(`Erreur mise à jour commande ${id}`, error.stack);
+      this.logger.error(
+        `Erreur mise à jour commande ${id}`,
+        error.stack,
+      );
       throw new InternalServerErrorException('Erreur mise à jour commande');
     }
   }
