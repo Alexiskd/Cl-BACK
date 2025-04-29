@@ -1,4 +1,5 @@
 // src/commande/commande.gateway.ts
+
 import {
   WebSocketGateway,
   WebSocketServer,
@@ -31,4 +32,3 @@ export class CommandeGateway
     this.server.emit('commandeUpdate', payload);
   }
 }
-
