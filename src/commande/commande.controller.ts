@@ -1,4 +1,5 @@
 // src/commande/commande.controller.ts
+
 import {
   Controller,
   Post,
@@ -13,6 +14,7 @@ import {
   UploadedFiles,
   InternalServerErrorException,
   Logger,
+  ClassSerializerInterceptor,
 } from '@nestjs/common';
 import { FileFieldsInterceptor } from '@nestjs/platform-express';
 import { memoryStorage } from 'multer';
@@ -20,6 +22,7 @@ import { CommandeService } from './commande.service';
 import { CommandeGateway } from './commande.gateway';
 import { Commande } from './commande.entity';
 
+@UseInterceptors(ClassSerializerInterceptor)
 @Controller('commande')
 export class CommandeController {
   private readonly logger = new Logger(CommandeController.name);
@@ -114,6 +117,7 @@ export class CommandeController {
             ? body.attestationPropriete === 'true'
             : null,
         ville: body.ville || '',
+        quantity: body.quantity ? parseInt(body.quantity, 10) : 1,
       };
 
       const numeroCommande = await this.commandeService.createCommande(
@@ -161,25 +165,39 @@ export class CommandeController {
   async getPaidCommandes(
     @Query('page') page = '1',
     @Query('limit') limit = '20',
-  ): Promise<{ data: Commande[]; count: number }> {
+  ): Promise<{ data: any[]; count: number }> {
     try {
       const [data, count] =
         await this.commandeService.getPaidCommandesPaginated(
           parseInt(page, 10),
           parseInt(limit, 10),
         );
-      return { data, count };
+
+      const formatted = data.map((cmd: Commande) => ({
+        id: cmd.id,
+        numeroCommande: cmd.numeroCommande,
+        produitCommande: cmd.produitCommande,
+        quantity: cmd.quantity,
+        prix: cmd.prix,
+        shippingMethod: cmd.shippingMethod,
+        urlPhotoRecto: cmd.urlPhotoRecto,
+        urlPhotoVerso: cmd.urlPhotoVerso,
+        nom: cmd.nom,
+        telephone: cmd.telephone,
+        adresseMail: cmd.adresseMail,
+        adressePostale: cmd.adressePostale,
+        createdAt: cmd.createdAt,
+      }));
+
+      return { data: formatted, count };
     } catch (error) {
       this.logger.error(
         'Erreur lors de la récupération des commandes payées',
         error.stack,
       );
-      // Exposer temporairement la pile d'erreur pour debugging
-      throw new InternalServerErrorException({
-        message: 'Erreur lors de la récupération des commandes payées.',
-        detail: error.message,
-        stack: error.stack,
-      });
+      throw new InternalServerErrorException(
+        'Erreur lors de la récupération des commandes payées.',
+      );
     }
   }
 
@@ -249,3 +267,4 @@ export class CommandeController {
     }
   }
 }
+
