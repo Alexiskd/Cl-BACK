@@ -53,14 +53,16 @@ export class CommandeController {
   ): Promise<{ numeroCommande: string }> {
     try {
       this.logger.log('Body reçu : ' + JSON.stringify(body));
-      // Construisez ici votre objet partiel selon votre front
-      const commande = await this.commandeService.createCommande({
+      const cmd = await this.commandeService.createCommande({
         nom: body.nom,
         adressePostale: body.adressePostale,
         cle: body.cle || [],
-        // ...
+        telephone: body.telephone,
+        adresseMail: body.adresseMail,
+        typeLivraison: body.typeLivraison || [],
+        // … ajoutez les champs restants
       } as any);
-      return { numeroCommande: commande.numeroCommande };
+      return { numeroCommande: cmd.numeroCommande };
     } catch (error) {
       this.logger.error('Erreur création commande', error.stack);
       throw new InternalServerErrorException('Erreur création commande');
@@ -72,7 +74,10 @@ export class CommandeController {
     try {
       const success = await this.commandeService.validateCommande(num);
       if (success) {
-        this.commandeGateway.emitCommandeUpdate({ type: 'validate', numeroCommande: num });
+        this.commandeGateway.emitCommandeUpdate({
+          type: 'validate',
+          numeroCommande: num,
+        });
       }
       return { success };
     } catch (error) {
@@ -87,19 +92,23 @@ export class CommandeController {
     @Query('limit') limit = '20',
   ): Promise<{ data: any[]; count: number }> {
     try {
-      const [cmds, count] = await this.commandeService.getPaidCommandesPaginated(
-        +page,
-        +limit,
-      );
-      // On mappe pour ajouter le champ produitCommande
+      const [cmds, count] =
+        await this.commandeService.getPaidCommandesPaginated(
+          +page,
+          +limit,
+        );
       const data = cmds.map((cmd) => ({
         ...cmd,
-        produitCommande: Array.isArray(cmd.cle) ? cmd.cle.join(', ') : cmd.cle,
+        produitCommande: Array.isArray(cmd.cle)
+          ? cmd.cle.join(', ')
+          : cmd.cle,
       }));
       return { data, count };
     } catch (error) {
       this.logger.error('Erreur récupération commandes payées', error.stack);
-      throw new InternalServerErrorException('Erreur récupération commandes payées');
+      throw new InternalServerErrorException(
+        'Erreur récupération commandes payées',
+      );
     }
   }
 
@@ -108,7 +117,10 @@ export class CommandeController {
     try {
       const success = await this.commandeService.cancelCommande(num);
       if (success) {
-        this.commandeGateway.emitCommandeUpdate({ type: 'cancel', numeroCommande: num });
+        this.commandeGateway.emitCommandeUpdate({
+          type: 'cancel',
+          numeroCommande: num,
+        });
       }
       return { success };
     } catch (error) {
@@ -128,7 +140,10 @@ export class CommandeController {
   }
 
   @Put('update/:id')
-  async updateCommande(@Param('id') id: string, @Body() data: Partial<Commande>) {
+  async updateCommande(
+    @Param('id') id: string,
+    @Body() data: Partial<Commande>,
+  ) {
     try {
       await this.commandeService.updateCommande(id, data);
       return this.commandeService.getCommandeByNumero(id);
