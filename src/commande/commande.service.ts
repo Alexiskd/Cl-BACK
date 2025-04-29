@@ -1,7 +1,11 @@
 // src/commande/commande.service.ts
-import { Injectable, InternalServerErrorException, Logger } from '@nestjs/common';
+import {
+  Injectable,
+  InternalServerErrorException,
+  Logger,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, FindOptionsOrder } from 'typeorm';
 import { Commande } from './commande.entity';
 
 @Injectable()
@@ -25,13 +29,18 @@ export class CommandeService {
 
   async validateCommande(numeroCommande: string): Promise<boolean> {
     try {
-      const cmd = await this.commandeRepository.findOne({ where: { numeroCommande } });
+      const cmd = await this.commandeRepository.findOne({
+        where: { numeroCommande },
+      });
       if (!cmd) return false;
       cmd.status = 'paid';
       await this.commandeRepository.save(cmd);
       return true;
     } catch (error) {
-      this.logger.error(`Erreur validation commande ${numeroCommande}`, error.stack);
+      this.logger.error(
+        `Erreur validation commande ${numeroCommande}`,
+        error.stack,
+      );
       throw new InternalServerErrorException('Erreur validation commande');
     }
   }
@@ -41,41 +50,54 @@ export class CommandeService {
     limit: number,
   ): Promise<[Commande[], number]> {
     try {
+      const order: FindOptionsOrder<Commande> = { dateCommande: 'DESC' };
       return await this.commandeRepository.findAndCount({
         where: { status: 'paid' },
         skip: (page - 1) * limit,
         take: limit,
-        // on retire `order: { dateCommande: 'DESC' }` pour éviter le 500
+        order,
       });
     } catch (error) {
       this.logger.error(
         `getPaidCommandesPaginated failed (page=${page}, limit=${limit})`,
         error.stack,
       );
-      throw new InternalServerErrorException('Erreur récupération commandes payées');
+      throw new InternalServerErrorException(
+        'Erreur récupération commandes payées',
+      );
     }
   }
 
   async cancelCommande(numeroCommande: string): Promise<boolean> {
     try {
-      const cmd = await this.commandeRepository.findOne({ where: { numeroCommande } });
+      const cmd = await this.commandeRepository.findOne({
+        where: { numeroCommande },
+      });
       if (!cmd) return false;
       cmd.status = 'cancelled';
       await this.commandeRepository.save(cmd);
       return true;
     } catch (error) {
-      this.logger.error(`Erreur annulation commande ${numeroCommande}`, error.stack);
+      this.logger.error(
+        `Erreur annulation commande ${numeroCommande}`,
+        error.stack,
+      );
       throw new InternalServerErrorException('Erreur annulation commande');
     }
   }
 
   async getCommandeByNumero(numeroCommande: string): Promise<Commande> {
     try {
-      const cmd = await this.commandeRepository.findOne({ where: { numeroCommande } });
+      const cmd = await this.commandeRepository.findOne({
+        where: { numeroCommande },
+      });
       if (!cmd) throw new InternalServerErrorException('Commande non trouvée');
       return cmd;
     } catch (error) {
-      this.logger.error(`Erreur récupération commande ${numeroCommande}`, error.stack);
+      this.logger.error(
+        `Erreur récupération commande ${numeroCommande}`,
+        error.stack,
+      );
       throw new InternalServerErrorException('Erreur récupération commande');
     }
   }
@@ -85,10 +107,16 @@ export class CommandeService {
     updateData: Partial<Commande>,
   ): Promise<Commande> {
     try {
-      await this.commandeRepository.update({ numeroCommande }, updateData);
+      await this.commandeRepository.update(
+        { numeroCommande },
+        updateData,
+      );
       return this.getCommandeByNumero(numeroCommande);
     } catch (error) {
-      this.logger.error(`Erreur mise à jour commande ${numeroCommande}`, error.stack);
+      this.logger.error(
+        `Erreur mise à jour commande ${numeroCommande}`,
+        error.stack,
+      );
       throw new InternalServerErrorException('Erreur mise à jour commande');
     }
   }
