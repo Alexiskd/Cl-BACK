@@ -1,4 +1,3 @@
-// src/commande/commande.entity.ts
 import {
   Entity,
   Column,
@@ -80,7 +79,7 @@ export class Commande {
   @Column({ nullable: true, default: 1 })
   quantity: number;
 
-  // ← Champ nécessaire pour le tri
+  // Champ nécessaire pour le tri et le mapping en createdAt
   @CreateDateColumn()
   dateCommande: Date;
 }
