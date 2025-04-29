@@ -80,9 +80,7 @@ export class Commande {
   @Column({ nullable: true, default: 1 })
   quantity: number;
 
-  // Pour exposer la date de création
   @CreateDateColumn()
   dateCommande: Date;
 }
-
 
