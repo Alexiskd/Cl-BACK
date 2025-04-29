@@ -15,7 +15,6 @@ import {
 } from '@nestjs/common';
 import { FileFieldsInterceptor } from '@nestjs/platform-express';
 import { memoryStorage } from 'multer';
-
 import { CommandeService } from './commande.service';
 import { CommandeGateway } from './commande.gateway';
 
@@ -37,7 +36,7 @@ export class CommandeController {
         { name: 'idCardFront', maxCount: 1 },
         { name: 'idCardBack', maxCount: 1 },
       ],
-      { storage: memoryStorage() }
+      { storage: memoryStorage() },
     ),
   )
   async create(
@@ -51,15 +50,6 @@ export class CommandeController {
   ): Promise<{ numeroCommande: string }> {
     try {
       this.logger.log('Body reçu : ' + JSON.stringify(body));
-
-      if (
-        body.lostCartePropriete === 'true' &&
-        (!body.domicileJustificatifPath || body.domicileJustificatifPath.trim() === '')
-      ) {
-        throw new InternalServerErrorException("Le chemin du justificatif de domicile est requis.");
-      }
-
-      const hasCartePropriete = !!(body.propertyCardNumber && body.propertyCardNumber.trim());
 
       const commandeData: Partial<any> = {
         nom: body.nom,
@@ -76,7 +66,7 @@ export class CommandeController {
         urlPhotoVerso: files.backPhoto?.[0]?.buffer.toString('base64') || null,
         prix: parseFloat(body.prix) || 0,
         isCleAPasse: body.isCleAPasse === 'true',
-        hasCartePropriete,
+        hasCartePropriete: body.propertyCardNumber?.trim() !== '',
         idCardFront: files.idCardFront?.[0]?.buffer.toString('base64') || null,
         idCardBack: files.idCardBack?.[0]?.buffer.toString('base64') || null,
         domicileJustificatif: body.domicileJustificatifPath || null,
@@ -85,7 +75,7 @@ export class CommandeController {
       };
 
       const commande = await this.commandeService.createCommande(commandeData);
-      return { numeroCommande: commande.numeroCommande };
+      return { numeroCommande: commande }; // ✅ Correction faite ici
     } catch (error) {
       this.logger.error('Erreur lors de la création de la commande', error.stack);
       throw new InternalServerErrorException('Erreur lors de la création de la commande.');
@@ -114,10 +104,7 @@ export class CommandeController {
     @Query('limit') limit = '20',
   ): Promise<{ data: any[]; count: number }> {
     try {
-      const [data, count] = await this.commandeService.getPaidCommandesPaginated(
-        +page,
-        +limit,
-      );
+      const [data, count] = await this.commandeService.getPaidCommandesPaginated(+page, +limit);
       return { data, count };
     } catch (error) {
       this.logger.error('Erreur récupération commandes payées', error.stack);
