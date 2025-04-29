@@ -1,4 +1,5 @@
-/import { Injectable, Logger } from '@nestjs/common';
+// src/commande/commande.service.ts
+import { Injectable, InternalServerErrorException, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Commande } from './commande.entity';
@@ -24,11 +25,8 @@ export class CommandeService {
       await this.commandeRepository.save(newCommande);
       return numeroCommande;
     } catch (error) {
-      this.logger.error(
-        'Erreur lors de la sauvegarde de la commande',
-        error.stack,
-      );
-      throw error;
+      this.logger.error('Erreur lors de la sauvegarde de la commande', error.stack);
+      throw new InternalServerErrorException('Erreur création commande');
     }
   }
 
@@ -43,22 +41,31 @@ export class CommandeService {
       return true;
     } catch (error) {
       this.logger.error(
-        `Erreur lors de la validation de la commande ${numeroCommande}`,
+        `Erreur validation commande ${numeroCommande}`,
         error.stack,
       );
-      throw error;
+      throw new InternalServerErrorException('Erreur validation commande');
     }
   }
 
-  async getPaidCommandes(): Promise<Commande[]> {
+  async getPaidCommandesPaginated(
+    page: number,
+    limit: number,
+  ): Promise<[Commande[], number]> {
     try {
-      return await this.commandeRepository.find({ where: { status: 'payer' } });
+      return await this.commandeRepository.findAndCount({
+        where: { status: 'payer' },
+        skip: (page - 1) * limit,
+        take: limit,
+      });
     } catch (error) {
       this.logger.error(
-        'Erreur lors de la récupération des commandes payées',
+        `getPaidCommandesPaginated failed (page=${page}, limit=${limit})`,
         error.stack,
       );
-      throw error;
+      throw new InternalServerErrorException(
+        'Erreur récupération commandes payées',
+      );
     }
   }
 
@@ -68,10 +75,10 @@ export class CommandeService {
       return result.affected > 0;
     } catch (error) {
       this.logger.error(
-        `Erreur lors de l'annulation de la commande ${numeroCommande}`,
+        `Erreur annulation commande ${numeroCommande}`,
         error.stack,
       );
-      throw error;
+      throw new InternalServerErrorException('Erreur annulation commande');
     }
   }
 
@@ -80,16 +87,34 @@ export class CommandeService {
       const commande = await this.commandeRepository.findOne({
         where: { numeroCommande },
       });
-      if (!commande) {
-        throw new Error('Commande non trouvée.');
-      }
+      if (!commande) throw new Error('Commande non trouvée.');
       return commande;
     } catch (error) {
       this.logger.error(
-        `Erreur lors de la récupération de la commande ${numeroCommande}`,
+        `Erreur récupération commande ${numeroCommande}`,
         error.stack,
       );
-      throw error;
+      throw new InternalServerErrorException('Erreur récupération commande');
+    }
+  }
+
+  async updateCommande(
+    id: string,
+    updateData: Partial<Commande>,
+  ): Promise<Commande> {
+    try {
+      await this.commandeRepository.update({ id }, updateData);
+      const updatedCommande = await this.commandeRepository.findOne({
+        where: { id },
+      });
+      if (!updatedCommande) throw new Error('Commande non trouvée.');
+      return updatedCommande;
+    } catch (error) {
+      this.logger.error(
+        `Erreur mise à jour commande ${id}`,
+        error.stack,
+      );
+      throw new InternalServerErrorException('Erreur mise à jour commande');
     }
   }
 }
