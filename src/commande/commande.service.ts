@@ -41,12 +41,11 @@ export class CommandeService {
     limit: number,
   ): Promise<[Commande[], number]> {
     try {
-      // On ne précise pas order ici pour éviter les problèmes SQL, 
-      // le tri peut être fait en JS si besoin
       return await this.commandeRepository.findAndCount({
         where: { status: 'paid' },
         skip: (page - 1) * limit,
         take: limit,
+        // on retire `order: { dateCommande: 'DESC' }` pour éviter le 500
       });
     } catch (error) {
       this.logger.error(
