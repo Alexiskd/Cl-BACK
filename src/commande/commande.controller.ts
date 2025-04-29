@@ -165,8 +165,8 @@ export class CommandeController {
     try {
       const [data, count] =
         await this.commandeService.getPaidCommandesPaginated(
-          parseInt(page),
-          parseInt(limit),
+          parseInt(page, 10),
+          parseInt(limit, 10),
         );
       return { data, count };
     } catch (error) {
@@ -174,9 +174,12 @@ export class CommandeController {
         'Erreur lors de la récupération des commandes payées',
         error.stack,
       );
-      throw new InternalServerErrorException(
-        'Erreur lors de la récupération des commandes payées.',
-      );
+      // Exposer temporairement la pile d'erreur pour debugging
+      throw new InternalServerErrorException({
+        message: 'Erreur lors de la récupération des commandes payées.',
+        detail: error.message,
+        stack: error.stack,
+      });
     }
   }
 
