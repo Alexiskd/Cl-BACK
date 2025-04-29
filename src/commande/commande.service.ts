@@ -1,3 +1,4 @@
+// src/commande/commande.service.ts
 import { Injectable, InternalServerErrorException, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -40,6 +41,8 @@ export class CommandeService {
     limit: number,
   ): Promise<[Commande[], number]> {
     try {
+      // On ne précise pas order ici pour éviter les problèmes SQL, 
+      // le tri peut être fait en JS si besoin
       return await this.commandeRepository.findAndCount({
         where: { status: 'paid' },
         skip: (page - 1) * limit,
@@ -56,8 +59,11 @@ export class CommandeService {
 
   async cancelCommande(numeroCommande: string): Promise<boolean> {
     try {
-      const result = await this.commandeRepository.delete({ numeroCommande });
-      return result.affected > 0;
+      const cmd = await this.commandeRepository.findOne({ where: { numeroCommande } });
+      if (!cmd) return false;
+      cmd.status = 'cancelled';
+      await this.commandeRepository.save(cmd);
+      return true;
     } catch (error) {
       this.logger.error(`Erreur annulation commande ${numeroCommande}`, error.stack);
       throw new InternalServerErrorException('Erreur annulation commande');
