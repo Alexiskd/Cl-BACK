@@ -1,3 +1,4 @@
+// src/commande/commande.service.ts
 import { Injectable, InternalServerErrorException, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -87,7 +88,10 @@ export class CommandeService {
       await this.commandeRepository.update({ numeroCommande }, updateData);
       return this.getCommandeByNumero(numeroCommande);
     } catch (error) {
-      this.logger.error(`Erreur mise à jour commande ${numeroCommande}`, error.stack);
+      this.logger.error(
+        `Erreur mise à jour commande ${numeroCommande}`,
+        error.stack,
+      );
       throw new InternalServerErrorException('Erreur mise à jour commande');
     }
   }
