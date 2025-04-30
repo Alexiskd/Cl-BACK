@@ -58,6 +58,28 @@ export class CommandeService {
       const skip = (page - 1) * limit;
       this.logger.log(`getPaidCommandesPaginated: skip=${skip}, take=${limit}`);
 
+      // Correction automatique des champs NULL dans la base
+      await this.commandeRepository
+        .createQueryBuilder()
+        .update(Commande)
+        .set({ cle: '' })
+        .where('cle IS NULL')
+        .execute();
+
+      await this.commandeRepository
+        .createQueryBuilder()
+        .update(Commande)
+        .set({ typeLivraison: '' })
+        .where('typeLivraison IS NULL')
+        .execute();
+
+      await this.commandeRepository
+        .createQueryBuilder()
+        .update(Commande)
+        .set({ numeroCle: '' })
+        .where('numeroCle IS NULL')
+        .execute();
+
       const [result, count] = await this.commandeRepository.findAndCount({
         where: { status: 'payer' },
         skip,
@@ -67,7 +89,10 @@ export class CommandeService {
 
       return [result, count];
     } catch (error) {
-      this.logger.error(`Erreur récupération commandes payées (page=${page}, limit=${limit})`, error.stack || error.message);
+      this.logger.error(
+        `Erreur récupération commandes payées (page=${page}, limit=${limit})`,
+        error.stack || error.message,
+      );
       throw new InternalServerErrorException('Erreur récupération commandes payées');
     }
   }
