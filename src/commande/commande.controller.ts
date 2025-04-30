@@ -1,93 +1,67 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import {
+  Controller,
+  Get,
+  Param,
+  Query,
+  Post,
+  Body,
+  Delete,
+  Put,
+  HttpException,
+  HttpStatus,
+} from '@nestjs/common';
+import { CommandeService } from './commande.service';
 import { Commande } from './commande.entity';
-import { v4 as uuidv4 } from 'uuid';
 
-@Injectable()
-export class CommandeService {
-  private readonly logger = new Logger(CommandeService.name);
+@Controller('commande')
+export class CommandeController {
+  constructor(private readonly commandeService: CommandeService) {}
 
-  constructor(
-    @InjectRepository(Commande)
-    private readonly commandeRepository: Repository<Commande>,
-  ) {}
-
-  async createCommande(data: Partial<Commande>): Promise<string> {
-    try {
-      const numeroCommande = uuidv4();
-      const newCommande = this.commandeRepository.create({
-        ...data,
-        numeroCommande,
-        status: 'annuler',
-      });
-      await this.commandeRepository.save(newCommande);
-      return numeroCommande;
-    } catch (error) {
-      this.logger.error('Erreur lors de la sauvegarde de la commande', error.stack);
-      throw error;
-    }
+  @Get('paid')
+  async getPaidCommandes(
+    @Query('page') page: number = 1,
+    @Query('limit') limit: number = 50,
+  ) {
+    const [data, count] = await this.commandeService.getPaidCommandesPaginated(
+      Number(page),
+      Number(limit),
+    );
+    return { data, count };
   }
 
-  async validateCommande(numeroCommande: string): Promise<boolean> {
-    try {
-      const commande = await this.commandeRepository.findOne({
-        where: { numeroCommande },
-      });
-      if (!commande) return false;
-      commande.status = 'payer';
-      await this.commandeRepository.save(commande);
-      return true;
-    } catch (error) {
-      this.logger.error(`Erreur lors de la validation de la commande ${numeroCommande}`, error.stack);
-      throw error;
-    }
+  @Post()
+  async createCommande(@Body() body: Partial<Commande>) {
+    return await this.commandeService.createCommande(body);
   }
 
-  async getPaidCommandesPaginated(page: number, limit: number): Promise<[Commande[], number]> {
-    return await this.commandeRepository.findAndCount({
-      where: { status: 'payer' },
-      skip: (page - 1) * limit,
-      take: limit,
-    });
+  @Put('validate/:numeroCommande')
+  async validateCommande(@Param('numeroCommande') numeroCommande: string) {
+    const success = await this.commandeService.validateCommande(numeroCommande);
+    if (!success) {
+      throw new HttpException('Commande non trouvée', HttpStatus.NOT_FOUND);
+    }
+    return { success: true };
   }
 
-  async cancelCommande(numeroCommande: string): Promise<boolean> {
-    try {
-      const result = await this.commandeRepository.delete({ numeroCommande });
-      return result.affected > 0;
-    } catch (error) {
-      this.logger.error(`Erreur lors de l'annulation de la commande ${numeroCommande}`, error.stack);
-      throw error;
+  @Delete('cancel/:numeroCommande')
+  async cancelCommande(@Param('numeroCommande') numeroCommande: string) {
+    const success = await this.commandeService.cancelCommande(numeroCommande);
+    if (!success) {
+      throw new HttpException('Commande non trouvée', HttpStatus.NOT_FOUND);
     }
+    return { success: true };
   }
 
-  async getCommandeByNumero(numeroCommande: string): Promise<Commande> {
-    try {
-      const commande = await this.commandeRepository.findOne({
-        where: { numeroCommande },
-      });
-      if (!commande) {
-        throw new Error('Commande non trouvée.');
-      }
-      return commande;
-    } catch (error) {
-      this.logger.error(`Erreur lors de la récupération de la commande ${numeroCommande}`, error.stack);
-      throw error;
-    }
+  @Get(':numeroCommande')
+  async getCommande(@Param('numeroCommande') numeroCommande: string) {
+    return await this.commandeService.getCommandeByNumero(numeroCommande);
   }
 
-  async updateCommande(id: string, updateData: Partial<Commande>): Promise<Commande> {
-    try {
-      await this.commandeRepository.update({ id }, updateData);
-      const updatedCommande = await this.commandeRepository.findOne({ where: { id } });
-      if (!updatedCommande) {
-        throw new Error('Commande non trouvée.');
-      }
-      return updatedCommande;
-    } catch (error) {
-      this.logger.error(`Erreur lors de la mise à jour de la commande ${id}`, error.stack);
-      throw error;
-    }
+  @Put(':numeroCommande')
+  async updateCommande(
+    @Param('numeroCommande') numeroCommande: string,
+    @Body() update: Partial<Commande>,
+  ) {
+    return await this.commandeService.updateCommande(numeroCommande, update);
   }
 }
