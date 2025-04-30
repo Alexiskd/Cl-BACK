@@ -16,15 +16,21 @@ export class CommandeService {
   async createCommande(data: Partial<Commande>): Promise<string> {
     try {
       const numeroCommande = uuidv4();
+
+      // Normalisation des champs critiques pour éviter les erreurs avec simple-array
       const newCommande = this.commandeRepository.create({
         ...data,
         numeroCommande,
         status: 'annuler',
+        cle: Array.isArray(data.cle) ? data.cle : [],
+        typeLivraison: Array.isArray(data.typeLivraison) ? data.typeLivraison : [],
+        numeroCle: Array.isArray(data.numeroCle) ? data.numeroCle : [],
       });
+
       await this.commandeRepository.save(newCommande);
       return numeroCommande;
     } catch (error) {
-      this.logger.error('Erreur lors de la sauvegarde de la commande', error.stack);
+      this.logger.error('Erreur lors de la sauvegarde de la commande', error.stack || error.message);
       throw new InternalServerErrorException('Erreur création commande');
     }
   }
@@ -38,23 +44,27 @@ export class CommandeService {
       await this.commandeRepository.save(commande);
       return true;
     } catch (error) {
-      this.logger.error(`Erreur validation commande ${numeroCommande}`, error.stack);
+      this.logger.error(`Erreur validation commande ${numeroCommande}`, error.stack || error.message);
       throw new InternalServerErrorException('Erreur validation commande');
     }
   }
 
   async getPaidCommandesPaginated(page: number, limit: number): Promise<[Commande[], number]> {
     try {
-      if (page <= 0 || limit <= 0) {
-        throw new Error(`Paramètres de pagination invalides : page=${page}, limit=${limit}`);
+      if (!Number.isInteger(page) || !Number.isInteger(limit) || page <= 0 || limit <= 0) {
+        throw new Error(`Paramètres pagination invalides : page=${page}, limit=${limit}`);
       }
+
+      const skip = (page - 1) * limit;
+      this.logger.log(`getPaidCommandesPaginated: skip=${skip}, take=${limit}`);
 
       const [result, count] = await this.commandeRepository.findAndCount({
         where: { status: 'payer' },
-        skip: (page - 1) * limit,
+        skip,
         take: limit,
         order: { id: 'DESC' },
       });
+
       return [result, count];
     } catch (error) {
       this.logger.error(`Erreur récupération commandes payées (page=${page}, limit=${limit})`, error.stack || error.message);
@@ -67,7 +77,7 @@ export class CommandeService {
       const result = await this.commandeRepository.delete({ numeroCommande });
       return result.affected > 0;
     } catch (error) {
-      this.logger.error(`Erreur annulation commande ${numeroCommande}`, error.stack);
+      this.logger.error(`Erreur annulation commande ${numeroCommande}`, error.stack || error.message);
       throw new InternalServerErrorException('Erreur annulation commande');
     }
   }
@@ -78,7 +88,7 @@ export class CommandeService {
       if (!commande) throw new Error('Commande non trouvée.');
       return commande;
     } catch (error) {
-      this.logger.error(`Erreur récupération commande ${numeroCommande}`, error.stack);
+      this.logger.error(`Erreur récupération commande ${numeroCommande}`, error.stack || error.message);
       throw new InternalServerErrorException('Erreur récupération commande');
     }
   }
@@ -90,7 +100,7 @@ export class CommandeService {
       if (!updatedCommande) throw new Error('Commande non trouvée.');
       return updatedCommande;
     } catch (error) {
-      this.logger.error(`Erreur mise à jour commande ${id}`, error.stack);
+      this.logger.error(`Erreur mise à jour commande ${id}`, error.stack || error.message);
       throw new InternalServerErrorException('Erreur mise à jour commande');
     }
   }
