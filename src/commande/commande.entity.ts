@@ -1,5 +1,3 @@
-import { Entity, Column, PrimaryGeneratedColumn, CreateDateColumn } from 'typeorm';
-
 @Entity()
 export class Commande {
   @PrimaryGeneratedColumn('uuid')
@@ -77,4 +75,3 @@ export class Commande {
   @CreateDateColumn()
   dateCommande: Date;
 }
-
