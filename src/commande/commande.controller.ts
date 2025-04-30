@@ -155,5 +155,16 @@ export class CommandeController {
       throw new InternalServerErrorException('Erreur lors de la mise à jour de la commande.');
     }
   }
-}
 
+  // ✅ Endpoint temporaire de DEBUG
+  @Get('debug/all')
+  async debugAll(): Promise<any[]> {
+    try {
+      this.logger.log('Debug: récupération brute de toutes les commandes');
+      return await this.commandeService['commandeRepository'].find();
+    } catch (error) {
+      this.logger.error('Erreur debug all', error.stack);
+      throw new InternalServerErrorException('Erreur debug commandes');
+    }
+  }
+}
