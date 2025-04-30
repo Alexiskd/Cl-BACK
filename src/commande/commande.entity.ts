@@ -1,6 +1,6 @@
-import { Entity, Column, PrimaryGeneratedColumn } from 'typeorm';
+import { Entity, Column, PrimaryGeneratedColumn, CreateDateColumn } from 'typeorm';
 
-@Entity('commande') // assure que le nom de la table est en minuscule
+@Entity()
 export class Commande {
   @PrimaryGeneratedColumn('uuid')
   id: string;
@@ -73,4 +73,6 @@ export class Commande {
 
   @Column({ default: 1 })
   quantity: number;
+
+
 }
