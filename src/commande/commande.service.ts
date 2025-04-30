@@ -1,5 +1,3 @@
-// src/commande/commande.service.ts
-
 import { Injectable, InternalServerErrorException, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -35,6 +33,7 @@ export class CommandeService {
     try {
       const commande = await this.commandeRepository.findOne({ where: { numeroCommande } });
       if (!commande) return false;
+      if (commande.status === 'payer') return true;
       commande.status = 'payer';
       await this.commandeRepository.save(commande);
       return true;
@@ -46,14 +45,19 @@ export class CommandeService {
 
   async getPaidCommandesPaginated(page: number, limit: number): Promise<[Commande[], number]> {
     try {
+      if (page <= 0 || limit <= 0) {
+        throw new Error(`Paramètres pagination invalides : page=${page}, limit=${limit}`);
+      }
+
       const result = await this.commandeRepository.findAndCount({
         where: { status: 'payer' },
         skip: (page - 1) * limit,
         take: limit,
+        order: { id: 'DESC' },
       });
       return result;
     } catch (error) {
-      this.logger.error(`Erreur récupération commandes payées (page=${page}, limit=${limit})`, error.stack);
+      this.logger.error(`Erreur récupération commandes payées (page=${page}, limit=${limit})`, error.stack || error.message);
       throw new InternalServerErrorException('Erreur récupération commandes payées');
     }
   }
