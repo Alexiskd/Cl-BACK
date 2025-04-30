@@ -1,95 +1,93 @@
-// src/commande/commande.controller.ts
-import {
-  Controller,
-  Post,
-  Body,
-  Patch,
-  Param,
-  Get,
-  Delete,
-  Query,
-  Put,
-  UseInterceptors,
-  UploadedFiles,
-  InternalServerErrorException,
-  Logger,
-} from '@nestjs/common';
-import { FileFieldsInterceptor } from '@nestjs/platform-express';
-import { memoryStorage } from 'multer';
-import { CommandeService } from './commande.service';
-import { CommandeGateway } from './commande.gateway';
+import { Injectable, Logger } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { Commande } from './commande.entity';
+import { v4 as uuidv4 } from 'uuid';
 
-@Controller('commande')
-export class CommandeController {
-  private readonly logger = new Logger(CommandeController.name);
+@Injectable()
+export class CommandeService {
+  private readonly logger = new Logger(CommandeService.name);
 
   constructor(
-    private readonly commandeService: CommandeService,
-    private readonly commandeGateway: CommandeGateway,
+    @InjectRepository(Commande)
+    private readonly commandeRepository: Repository<Commande>,
   ) {}
 
-  @Get('fix-null-arrays')
-  async fixInvalidArrays(): Promise<{ fixed: number }> {
+  async createCommande(data: Partial<Commande>): Promise<string> {
     try {
-      let total = 0;
-
-      const res1 = await this.commandeService['commandeRepository']
-        .createQueryBuilder()
-        .update()
-        .set({ cle: [] })
-        .where('cle IS NULL')
-        .execute();
-      total += res1.affected || 0;
-
-      const res2 = await this.commandeService['commandeRepository']
-        .createQueryBuilder()
-        .update()
-        .set({ typeLivraison: [] })
-        .where('typeLivraison IS NULL')
-        .execute();
-      total += res2.affected || 0;
-
-      const res3 = await this.commandeService['commandeRepository']
-        .createQueryBuilder()
-        .update()
-        .set({ numeroCle: [] })
-        .where('numeroCle IS NULL')
-        .execute();
-      total += res3.affected || 0;
-
-      return { fixed: total };
+      const numeroCommande = uuidv4();
+      const newCommande = this.commandeRepository.create({
+        ...data,
+        numeroCommande,
+        status: 'annuler',
+      });
+      await this.commandeRepository.save(newCommande);
+      return numeroCommande;
     } catch (error) {
-      this.logger.error('Erreur correction des champs NULL', error.stack);
-      throw new InternalServerErrorException('Erreur correction des champs NULL');
+      this.logger.error('Erreur lors de la sauvegarde de la commande', error.stack);
+      throw error;
     }
   }
 
-  @Post('fake')
-  async createFakeCommande(): Promise<{ numeroCommande: string; dateCommande: Date }> {
+  async validateCommande(numeroCommande: string): Promise<boolean> {
     try {
-      const numeroCommande = await this.commandeService.createCommande({
-        nom: 'Jean Dupont',
-        adressePostale: '10 rue Test, 75001 Paris',
-        cle: ['Clé A'],
-        numeroCle: ['1234A'],
-        telephone: '0600000000',
-        adresseMail: 'test@exemple.com',
-        typeLivraison: ['par numero'],
-        prix: 42.5,
-        shippingMethod: 'retrait',
-        deliveryType: 'boutique',
-        status: 'payer',
-        quantity: 1,
-        ville: 'Paris',
+      const commande = await this.commandeRepository.findOne({
+        where: { numeroCommande },
       });
-      const nouvelleCommande = await this.commandeService.getCommandeByNumero(numeroCommande);
-      return {
-        numeroCommande: nouvelleCommande.numeroCommande,
-        dateCommande: nouvelleCommande.dateCommande,
-      };
+      if (!commande) return false;
+      commande.status = 'payer';
+      await this.commandeRepository.save(commande);
+      return true;
     } catch (error) {
-      this.logger.error('Erreur création commande factice', error.stack);
-      throw new InternalServerErrorException('Erreur création commande factice');
+      this.logger.error(`Erreur lors de la validation de la commande ${numeroCommande}`, error.stack);
+      throw error;
+    }
+  }
+
+  async getPaidCommandesPaginated(page: number, limit: number): Promise<[Commande[], number]> {
+    return await this.commandeRepository.findAndCount({
+      where: { status: 'payer' },
+      skip: (page - 1) * limit,
+      take: limit,
+    });
+  }
+
+  async cancelCommande(numeroCommande: string): Promise<boolean> {
+    try {
+      const result = await this.commandeRepository.delete({ numeroCommande });
+      return result.affected > 0;
+    } catch (error) {
+      this.logger.error(`Erreur lors de l'annulation de la commande ${numeroCommande}`, error.stack);
+      throw error;
+    }
+  }
+
+  async getCommandeByNumero(numeroCommande: string): Promise<Commande> {
+    try {
+      const commande = await this.commandeRepository.findOne({
+        where: { numeroCommande },
+      });
+      if (!commande) {
+        throw new Error('Commande non trouvée.');
+      }
+      return commande;
+    } catch (error) {
+      this.logger.error(`Erreur lors de la récupération de la commande ${numeroCommande}`, error.stack);
+      throw error;
+    }
+  }
+
+  async updateCommande(id: string, updateData: Partial<Commande>): Promise<Commande> {
+    try {
+      await this.commandeRepository.update({ id }, updateData);
+      const updatedCommande = await this.commandeRepository.findOne({ where: { id } });
+      if (!updatedCommande) {
+        throw new Error('Commande non trouvée.');
+      }
+      return updatedCommande;
+    } catch (error) {
+      this.logger.error(`Erreur lors de la mise à jour de la commande ${id}`, error.stack);
+      throw error;
     }
   }
 }
