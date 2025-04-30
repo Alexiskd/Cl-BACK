@@ -1,6 +1,6 @@
 import { Entity, Column, PrimaryGeneratedColumn } from 'typeorm';
 
-@Entity()
+@Entity('commande') // assure que le nom de la table est en minuscule
 export class Commande {
   @PrimaryGeneratedColumn('uuid')
   id: string;
