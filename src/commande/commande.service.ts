@@ -11,7 +11,7 @@ export class CommandeService {
 
   constructor(
     @InjectRepository(Commande)
-    private readonly commandeRepository: Repository<Commande>,
+    public readonly commandeRepository: Repository<Commande>,
   ) {}
 
   async createCommande(data: Partial<Commande>): Promise<string> {
@@ -43,10 +43,7 @@ export class CommandeService {
     }
   }
 
-  async getPaidCommandesPaginated(
-    page: number,
-    limit: number,
-  ): Promise<[Commande[], number]> {
+  async getPaidCommandesPaginated(page: number, limit: number): Promise<[Commande[], number]> {
     try {
       const qb = this.commandeRepository
         .createQueryBuilder('commande')
@@ -56,10 +53,7 @@ export class CommandeService {
         .take(limit);
       return qb.getManyAndCount();
     } catch (error) {
-      this.logger.error(
-        `Erreur pagination paid (page=${page} limit=${limit})`,
-        error.stack,
-      );
+      this.logger.error(`Erreur pagination paid (page=${page} limit=${limit})`, error.stack);
       throw new InternalServerErrorException('Erreur récupération commandes payées');
     }
   }
@@ -88,10 +82,7 @@ export class CommandeService {
     }
   }
 
-  async updateCommande(
-    numeroCommande: string,
-    updateData: Partial<Commande>,
-  ): Promise<Commande> {
+  async updateCommande(numeroCommande: string, updateData: Partial<Commande>): Promise<Commande> {
     try {
       await this.commandeRepository.update({ numeroCommande }, updateData);
       return this.getCommandeByNumero(numeroCommande);
