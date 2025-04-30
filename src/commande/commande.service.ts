@@ -17,7 +17,6 @@ export class CommandeService {
     try {
       const numeroCommande = uuidv4();
 
-      // Normalisation des champs critiques pour éviter les erreurs avec simple-array
       const newCommande = this.commandeRepository.create({
         ...data,
         numeroCommande,
@@ -52,7 +51,8 @@ export class CommandeService {
   async getPaidCommandesPaginated(page: number, limit: number): Promise<[Commande[], number]> {
     try {
       if (!Number.isInteger(page) || !Number.isInteger(limit) || page <= 0 || limit <= 0) {
-        throw new Error(`Paramètres pagination invalides : page=${page}, limit=${limit}`);
+        this.logger.error(`Paramètres pagination invalides : page=${page}, limit=${limit}`);
+        throw new Error('Paramètres de pagination invalides');
       }
 
       const skip = (page - 1) * limit;
@@ -105,3 +105,4 @@ export class CommandeService {
     }
   }
 }
+
