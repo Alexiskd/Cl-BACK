@@ -1,5 +1,3 @@
-// src/commande/commande.gateway.ts
-
 import {
   WebSocketGateway,
   WebSocketServer,
@@ -11,21 +9,20 @@ import { Server, Socket } from 'socket.io';
 import { Logger } from '@nestjs/common';
 
 @WebSocketGateway({ cors: true })
-export class CommandeGateway
-  implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect {
+export class CommandeGateway implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect {
   @WebSocketServer() server: Server;
-  private logger = new Logger(CommandeGateway.name);
+  private logger: Logger = new Logger('CommandeGateway');
 
   afterInit(server: Server) {
-    this.logger.log('WebSocket server initialized');
+    this.logger.log('WebSocket initialisé');
   }
 
   handleConnection(client: Socket) {
-    this.logger.log(`Client connected: ${client.id}`);
+    this.logger.log(`Client connecté: ${client.id}`);
   }
 
   handleDisconnect(client: Socket) {
-    this.logger.log(`Client disconnected: ${client.id}`);
+    this.logger.log(`Client déconnecté: ${client.id}`);
   }
 
   emitCommandeUpdate(payload: any) {
