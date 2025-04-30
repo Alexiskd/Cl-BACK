@@ -1,5 +1,3 @@
-
-// src/commande/commande.service.ts
 import { Injectable, InternalServerErrorException, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -37,10 +35,7 @@ export class CommandeService {
     }
   }
 
-  async getPaidCommandesPaginated(
-    page: number,
-    limit: number,
-  ): Promise<[Commande[], number]> {
+  async getPaidCommandesPaginated(page: number, limit: number): Promise<[Commande[], number]> {
     try {
       return await this.commandeRepository.findAndCount({
         where: { status: 'paid' },
@@ -83,10 +78,7 @@ export class CommandeService {
     }
   }
 
-  async updateCommande(
-    numeroCommande: string,
-    updateData: Partial<Commande>,
-  ): Promise<Commande> {
+  async updateCommande(numeroCommande: string, updateData: Partial<Commande>): Promise<Commande> {
     try {
       await this.commandeRepository.update({ numeroCommande }, updateData);
       return this.getCommandeByNumero(numeroCommande);
