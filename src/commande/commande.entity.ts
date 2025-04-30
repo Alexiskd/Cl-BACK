@@ -1,3 +1,4 @@
+// src/commande/commande.entity.ts
 import { Entity, Column, PrimaryGeneratedColumn, CreateDateColumn } from 'typeorm';
 
 @Entity()
@@ -32,16 +33,16 @@ export class Commande {
   @Column('simple-array')
   typeLivraison: string[];
 
-  @Column({ default: '' })
+  @Column({ nullable: true, default: '' })
   shippingMethod: string;
 
-  @Column({ default: '' })
+  @Column({ nullable: true, default: '' })
   deliveryType: string;
 
-  @Column('text', { nullable: true })
+  @Column({ type: 'text', nullable: true })
   urlPhotoRecto: string;
 
-  @Column('text', { nullable: true })
+  @Column({ type: 'text', nullable: true })
   urlPhotoVerso: string;
 
   @Column({ default: 'annuler' })
@@ -56,23 +57,23 @@ export class Commande {
   @Column({ nullable: true, default: null })
   hasCartePropriete: boolean;
 
-  @Column('text', { nullable: true })
+  @Column({ type: 'text', nullable: true })
   idCardFront: string;
 
-  @Column('text', { nullable: true })
+  @Column({ type: 'text', nullable: true })
   idCardBack: string;
 
-  @Column('text', { nullable: true })
+  @Column({ type: 'text', nullable: true })
   domicileJustificatif: string;
 
   @Column({ nullable: true, default: null })
   attestationPropriete: boolean;
 
-  @Column({ default: '' })
+  @Column({ nullable: true, default: '' })
   ville: string;
 
-  @Column({ default: 1 })
+  @Column({ nullable: true, default: 1 })
   quantity: number;
 
-
+  
 }
