@@ -58,27 +58,16 @@ export class CommandeService {
       const skip = (page - 1) * limit;
       this.logger.log(`getPaidCommandesPaginated: skip=${skip}, take=${limit}`);
 
-      // Correction automatique des champs NULL dans la base
-      await this.commandeRepository
-        .createQueryBuilder()
-        .update(Commande)
-        .set({ cle: '' })
-        .where('cle IS NULL')
-        .execute();
-
-      await this.commandeRepository
-        .createQueryBuilder()
-        .update(Commande)
-        .set({ typeLivraison: '' })
-        .where('typeLivraison IS NULL')
-        .execute();
-
-      await this.commandeRepository
-        .createQueryBuilder()
-        .update(Commande)
-        .set({ numeroCle: '' })
-        .where('numeroCle IS NULL')
-        .execute();
+      // Correction en base si certains champs sont NULL (pour éviter erreur 500)
+      await this.commandeRepository.query(`
+        UPDATE commande SET cle = '' WHERE cle IS NULL;
+      `);
+      await this.commandeRepository.query(`
+        UPDATE commande SET typeLivraison = '' WHERE typeLivraison IS NULL;
+      `);
+      await this.commandeRepository.query(`
+        UPDATE commande SET numeroCle = '' WHERE numeroCle IS NULL;
+      `);
 
       const [result, count] = await this.commandeRepository.findAndCount({
         where: { status: 'payer' },
