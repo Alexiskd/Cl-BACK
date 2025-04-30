@@ -1,32 +1,15 @@
-import {
-  WebSocketGateway,
-  WebSocketServer,
-  OnGatewayInit,
-  OnGatewayConnection,
-  OnGatewayDisconnect,
-} from '@nestjs/websockets';
-import { Server, Socket } from 'socket.io';
-import { Logger } from '@nestjs/common';
+// src/commande/commande.module.ts
+import { Module } from '@nestjs/common';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { Commande } from './commande.entity';
+import { CommandeController } from './commande.controller';
+import { CommandeService } from './commande.service';
+import { CommandeGateway } from './commande.gateway';
 
-@WebSocketGateway({ cors: true })
-export class CommandeGateway
-  implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect {
-  @WebSocketServer() server: Server;
-  private logger: Logger = new Logger('CommandeGateway');
-
-  afterInit(server: Server) {
-    this.logger.log('WebSocket initialisé');
-  }
-
-  handleConnection(client: Socket) {
-    this.logger.log(`Client connecté: ${client.id}`);
-  }
-
-  handleDisconnect(client: Socket) {
-    this.logger.log(`Client déconnecté: ${client.id}`);
-  }
-
-  emitCommandeUpdate(payload: any) {
-    this.server.emit('commandeUpdate', payload);
-  }
-}
+@Module({
+  imports: [TypeOrmModule.forFeature([Commande])],
+  controllers: [CommandeController],
+  providers: [CommandeService, CommandeGateway],
+  exports: [CommandeService, CommandeGateway], // Ajoute ceci si nécessaire
+})
+export class CommandeModule {} // ✅ Ceci doit exister
