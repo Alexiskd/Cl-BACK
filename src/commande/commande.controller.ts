@@ -1,5 +1,3 @@
-// src/commande/commande.controller.ts
-
 import {
   Controller,
   Post,
@@ -79,7 +77,7 @@ export class CommandeController {
       };
 
       const numeroCommande = await this.commandeService.createCommande(commandeData);
-      return { numeroCommande }; // ✅ Ligne corrigée ici
+      return { numeroCommande };
     } catch (error) {
       this.logger.error('Erreur lors de la création de la commande', error.stack);
       throw new InternalServerErrorException('Erreur lors de la création de la commande.');
@@ -101,12 +99,24 @@ export class CommandeController {
   }
 
   @Get('paid')
-  async getPaidCommandes(@Query('page') page = '1', @Query('limit') limit = '20'): Promise<{ data: any[]; count: number }> {
+  async getPaidCommandes(
+    @Query('page') page = '1',
+    @Query('limit') limit = '20',
+  ): Promise<{ data: any[]; count: number }> {
     try {
-      const [data, count] = await this.commandeService.getPaidCommandesPaginated(+page, +limit);
+      const parsedPage = parseInt(page, 10);
+      const parsedLimit = parseInt(limit, 10);
+
+      if (isNaN(parsedPage) || isNaN(parsedLimit)) {
+        throw new Error(`Paramètres page ou limit invalides : page=${page}, limit=${limit}`);
+      }
+
+      this.logger.log(`getPaidCommandes called with page=${parsedPage}, limit=${parsedLimit}`);
+
+      const [data, count] = await this.commandeService.getPaidCommandesPaginated(parsedPage, parsedLimit);
       return { data, count };
     } catch (error) {
-      this.logger.error('Erreur récupération commandes payées', error.stack);
+      this.logger.error('Erreur récupération commandes payées', error.stack || error.message);
       throw new InternalServerErrorException('Erreur lors de la récupération des commandes payées.');
     }
   }
@@ -146,3 +156,4 @@ export class CommandeController {
     }
   }
 }
+
