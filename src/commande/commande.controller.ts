@@ -1,4 +1,3 @@
-// src/commande/commande.controller.ts
 import {
   Controller,
   Post,
@@ -12,6 +11,8 @@ import {
   UseInterceptors,
   UploadedFiles,
   InternalServerErrorException,
+  HttpException,
+  HttpStatus,
   Logger,
 } from '@nestjs/common';
 import { FileFieldsInterceptor } from '@nestjs/platform-express';
@@ -28,39 +29,149 @@ export class CommandeController {
     private readonly commandeGateway: CommandeGateway,
   ) {}
 
-  @Get('fix-null-arrays')
-  async fixInvalidArrays(): Promise<{ fixed: number }> {
+  @Post('create')
+  @UseInterceptors(
+    FileFieldsInterceptor(
+      [
+        { name: 'frontPhoto', maxCount: 1 },
+        { name: 'backPhoto', maxCount: 1 },
+        { name: 'idCardFront', maxCount: 1 },
+        { name: 'idCardBack', maxCount: 1 },
+      ],
+      { storage: memoryStorage() },
+    ),
+  )
+  async create(
+    @UploadedFiles() files: {
+      frontPhoto?: Express.Multer.File[];
+      backPhoto?: Express.Multer.File[];
+      idCardFront?: Express.Multer.File[];
+      idCardBack?: Express.Multer.File[];
+    },
+    @Body() body: any,
+  ): Promise<{ numeroCommande: string; dateCommande: Date }> {
     try {
-      let total = 0;
+      this.logger.log(`Body reçu : ${JSON.stringify(body)}`);
 
-      const res1 = await this.commandeService['commandeRepository']
-        .createQueryBuilder()
-        .update()
-        .set({ cle: '' })
-        .where('cle IS NULL')
-        .execute();
-      total += res1.affected || 0;
+      if (
+        body.lostCartePropriete === 'true' &&
+        (!body.domicileJustificatifPath || !body.domicileJustificatifPath.trim())
+      ) {
+        throw new InternalServerErrorException(
+          "Le chemin du justificatif de domicile est requis.",
+        );
+      }
 
-      const res2 = await this.commandeService['commandeRepository']
-        .createQueryBuilder()
-        .update()
-        .set({ typeLivraison: '' })
-        .where('typeLivraison IS NULL')
-        .execute();
-      total += res2.affected || 0;
+      const hasCartePropriete = !!(
+        body.propertyCardNumber && body.propertyCardNumber.trim()
+      );
 
-      const res3 = await this.commandeService['commandeRepository']
-        .createQueryBuilder()
-        .update()
-        .set({ numeroCle: '' })
-        .where('numeroCle IS NULL')
-        .execute();
-      total += res3.affected || 0;
+      const commandeData: Partial<any> = {
+        nom: body.nom,
+        adressePostale: `${body.address}, ${body.postalCode}, ${body.ville}, ${body.additionalInfo}`,
+        telephone: body.phone,
+        adresseMail: body.email,
+        cle: body.articleName?.trim() ? [body.articleName] : [],
+        numeroCle: body.keyNumber?.trim() ? [body.keyNumber] : [],
+        propertyCardNumber: body.propertyCardNumber?.trim() || null,
+        typeLivraison: body.keyNumber?.trim()
+          ? ['par numero']
+          : ['par envoi postal'],
+        shippingMethod: body.shippingMethod || '',
+        deliveryType: body.deliveryType || '',
+        urlPhotoRecto: files.frontPhoto?.[0]?.buffer.toString('base64') || null,
+        urlPhotoVerso: files.backPhoto?.[0]?.buffer.toString('base64') || null,
+        prix: parseFloat(body.prix) || 0,
+        isCleAPasse: body.isCleAPasse === 'true',
+        hasCartePropriete,
+        idCardFront: files.idCardFront?.[0]?.buffer.toString('base64') || null,
+        idCardBack: files.idCardBack?.[0]?.buffer.toString('base64') || null,
+        domicileJustificatif: body.domicileJustificatifPath || null,
+        attestationPropriete: body.attestationPropriete === 'true',
+        ville: body.ville || '',
+      };
 
-      return { fixed: total };
+      const nouvelleCommande = await this.commandeService.createCommande(
+        commandeData,
+      );
+
+      return {
+        numeroCommande: nouvelleCommande.numeroCommande,
+        dateCommande: nouvelleCommande.dateCommande,
+      };
     } catch (error) {
-      this.logger.error('Erreur correction des champs NULL', error.stack);
-      throw new InternalServerErrorException('Erreur correction des champs NULL');
+      this.logger.error('Erreur création commande', error.stack);
+      throw new InternalServerErrorException(`Erreur création commande : ${error.message}`);
+    }
+  }
+
+  @Patch('validate/:numeroCommande')
+  async validate(@Param('numeroCommande') numeroCommande: string) {
+    try {
+      const success = await this.commandeService.validateCommande(numeroCommande);
+      if (success) {
+        this.commandeGateway.emitCommandeUpdate({ type: 'validate', numeroCommande });
+      }
+      return { success };
+    } catch (error) {
+      this.logger.error(`Erreur validation commande`, error.stack);
+      throw new InternalServerErrorException('Erreur validation commande.');
+    }
+  }
+
+  @Get('paid')
+  async getPaidCommandes(@Query('page') page = '1', @Query('limit') limit = '20') {
+    try {
+      const [data, count] = await this.commandeService.getPaidCommandesPaginated(
+        +page,
+        +limit,
+      );
+      return { data, count };
+    } catch (error) {
+      throw new HttpException(
+        {
+          statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
+          error: error.name,
+          message: error.message,
+          stack: error.stack?.split('\n').slice(0, 5),
+        },
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  @Delete('cancel/:numeroCommande')
+  async cancel(@Param('numeroCommande') numeroCommande: string) {
+    try {
+      const success = await this.commandeService.cancelCommande(numeroCommande);
+      if (success) {
+        this.commandeGateway.emitCommandeUpdate({ type: 'cancel', numeroCommande });
+      }
+      return { success };
+    } catch (error) {
+      this.logger.error(`Erreur annulation commande`, error.stack);
+      throw new InternalServerErrorException('Erreur annulation commande.');
+    }
+  }
+
+  @Get(':numeroCommande')
+  async getCommande(@Param('numeroCommande') numeroCommande: string) {
+    try {
+      return await this.commandeService.getCommandeByNumero(numeroCommande);
+    } catch (error) {
+      this.logger.error(`Erreur récupération commande`, error.stack);
+      throw new InternalServerErrorException('Erreur récupération commande.');
+    }
+  }
+
+  @Put('update/:id')
+  async updateCommande(@Param('id') id: string, @Body() updateData: Partial<any>) {
+    try {
+      await this.commandeService.updateCommande(id, updateData);
+      return await this.commandeService.getCommandeByNumero(id);
+    } catch (error) {
+      this.logger.error(`Erreur mise à jour commande`, error.stack);
+      throw new InternalServerErrorException('Erreur mise à jour commande.');
     }
   }
 }
