@@ -46,16 +46,16 @@ export class CommandeService {
   async getPaidCommandesPaginated(page: number, limit: number): Promise<[Commande[], number]> {
     try {
       if (page <= 0 || limit <= 0) {
-        throw new Error(`Paramètres pagination invalides : page=${page}, limit=${limit}`);
+        throw new Error(`Paramètres de pagination invalides : page=${page}, limit=${limit}`);
       }
 
-      const result = await this.commandeRepository.findAndCount({
+      const [result, count] = await this.commandeRepository.findAndCount({
         where: { status: 'payer' },
         skip: (page - 1) * limit,
         take: limit,
         order: { id: 'DESC' },
       });
-      return result;
+      return [result, count];
     } catch (error) {
       this.logger.error(`Erreur récupération commandes payées (page=${page}, limit=${limit})`, error.stack || error.message);
       throw new InternalServerErrorException('Erreur récupération commandes payées');
